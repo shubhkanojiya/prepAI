@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}Result — {{ test.title }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <section class="result-hero mb-4" aria-labelledby="resTitle">
+    <div class="row g-4 align-items-center">
+      <div class="col-md-auto text-center">
+        <div class="score-ring mx-auto" style="--value: {{ attempt.percentage|floatformat:0 }}" role="img" aria-label="Score {{ attempt.percentage|floatformat:0 }} percent">
+          <div><div><div class="fs-2 fw-bold">{{ attempt.percentage|floatformat:0 }}%</div><div class="small opacity-75">Score</div></div></div>
+        </div>
+      </div>
+      <div class="col-md">
+        <p class="mb-1 opacity-75">{{ attempt.get_status_display }} · {{ attempt.submitted_at|date:"j M Y, H:i" }}</p>
+        <h1 id="resTitle" class="h3 mb-2">{{ test.title }}</h1>
+        <p class="mb-3 opacity-75">
+          {% if attempt.passed %}<i class="bi bi-trophy"></i> Great work — you cleared the {{ test.pass_percentage }}% pass mark!
+          {% else %}<i class="bi bi-lightning-charge"></i> Keep going — the pass mark is {{ test.pass_percentage }}%. Review the explanations below.{% endif %}
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ test.get_absolute_url }}" class="btn btn-light fw-semibold"><i class="bi bi-arrow-repeat"></i> Retake</a>
+          <a href="{% url 'dashboard:analytics' %}" class="btn btn-outline-light"><i class="bi bi-graph-up"></i> Performance</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value">{{ attempt.score|floatformat:"-2" }}<span class="fs-6 text-muted">/{{ attempt.max_score|floatformat:"-2" }}</span></div><div class="stat-label">Marks</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value tone-good">{{ attempt.correct_count }}</div><div class="stat-label">Correct</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value tone-bad">{{ attempt.incorrect_count }}</div><div class="stat-label">Incorrect</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value">{{ attempt.unanswered_count }}</div><div class="stat-label">Unanswered</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value">{{ attempt.accuracy|floatformat:0 }}%</div><div class="stat-label">Accuracy</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="pa-card stat-card card-body"><div class="stat-value">{{ attempt.time_taken_seconds|duration }}</div><div class="stat-label">Time taken</div></div></div>
+  </div>
+  {% if attempt.ungraded_count %}<div class="alert alert-info small" role="note"><i class="bi bi-info-circle"></i> {{ attempt.ungraded_count }} written answer{{ attempt.ungraded_count|pluralize }} {{ attempt.ungraded_count|pluralize:"is,are" }} not auto-graded. Compare them with the model answers below.</div>{% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <h2 class="h5 mb-3">Question-wise analysis</h2>
+      <div class="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Filter questions">
+        <button type="button" class="chip active" data-filter="all">All</button>
+        <button type="button" class="chip" data-filter="correct">Correct</button>
+        <button type="button" class="chip" data-filter="incorrect">Incorrect</button>
+        <button type="button" class="chip" data-filter="unanswered">Unanswered</button>
+      </div>
+      <div class="d-grid gap-3">
+        {% for row in questions %}
+        <article class="pa-card qa-item {{ row.state }}" data-state="{{ row.state }}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+              <h3 class="h6 mb-0">Q{{ row.number }}</h3>
+              <span class="{% if row.state == 'correct' %}badge-good{% elif row.state == 'incorrect' %}badge-bad{% elif row.state == 'ungraded' %}badge-warn{% else %}badge-muted{% endif %}">
+                {% if row.state == 'correct' %}<i class="bi bi-check-lg"></i> Correct{% elif row.state == 'incorrect' %}<i class="bi bi-x-lg"></i> Incorrect{% elif row.state == 'ungraded' %}Self-check{% else %}Not answered{% endif %}
+                · {{ row.answer.marks_awarded|default:0|floatformat:"-2" }} marks
+              </span>
+            </div>
+            <div class="question-text mb-3" data-render-math>{{ row.question.text }}</div>
+            {% if row.options %}
+            <ul class="option-list mb-3">
+              {% for o in row.options %}
+              <li class="option-item {% if o.option.is_correct %}correct{% elif o.selected %}incorrect{% endif %}">
+                <span class="option-letter">{% if o.option.is_correct %}<i class="bi bi-check-lg"></i>{% elif o.selected %}<i class="bi bi-x-lg"></i>{% else %}{{ forloop.counter }}{% endif %}</span>
+                <span data-render-math>{{ o.option.text }}</span>
+                {% if o.selected %}<span class="ms-auto small fw-semibold">Your answer</span>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+              <p class="small mb-1"><strong>Your answer:</strong> {{ row.answer.text_answer|default:"—" }}</p>
+              {% if row.question.answer %}<div class="small mb-2"><strong>Model answer:</strong><div class="prose" data-render-math>{{ row.question.answer|markdown }}</div></div>{% endif %}
+            {% endif %}
+            {% if test.show_explanations and row.question.explanation %}
+            <details class="mt-2">
+              <summary class="fw-semibold small" style="cursor:pointer">Explanation</summary>
+              <div class="prose small mt-2" data-render-math>{{ row.question.explanation|markdown }}</div>
+            </details>
+            {% endif %}
+            <div class="mt-2 d-flex gap-2">
+              <a href="{{ row.question.get_absolute_url }}" class="small">Open question</a>
+              <a href="{% url 'assistant:home' %}?q={{ 'Explain this question: '|add:row.question.text|truncatechars:800|urlencode }}" class="small"><i class="bi bi-lightbulb"></i> Ask AI</a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside class="col-lg-4">
+      <section class="pa-card mb-3" aria-labelledby="sp">
+        <div class="pa-card-header"><h2 id="sp">Subject performance</h2></div>
+        <div class="card-body">
+          {% for s in subject_breakdown %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">{{ s.name }}</span><span>{{ s.correct }}/{{ s.total }} · {{ s.score_pct|floatformat:0 }}%</span></div>
+            <div class="progress" role="progressbar" aria-label="{{ s.name }}" aria-valuenow="{{ s.score_pct|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar {{ s.score_pct|score_tone }}" style="width: {{ s.score_pct|floatformat:0 }}%"></div></div>
+          </div>
+          {% empty %}<p class="small text-muted mb-0">No auto-graded questions.</p>{% endfor %}
+        </div>
+      </section>
+      <section class="pa-card mb-3" aria-labelledby="cp">
+        <div class="pa-card-header"><h2 id="cp">Chapter performance</h2></div>
+        <div class="card-body">
+          {% for c in chapter_breakdown %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold text-truncate">{{ c.name }}</span><span class="flex-shrink-0 ms-2">{{ c.correct }}/{{ c.total }}</span></div>
+            <div class="progress" role="progressbar" aria-label="{{ c.name }}" aria-valuenow="{{ c.score_pct|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar {{ c.score_pct|score_tone }}" style="width: {{ c.score_pct|floatformat:0 }}%"></div></div>
+          </div>
+          {% empty %}<p class="small text-muted mb-0">No chapter data.</p>{% endfor %}
+        </div>
+      </section>
+      {% if weak_chapters %}
+      <section class="pa-card mb-3" aria-labelledby="rt">
+        <div class="pa-card-header"><h2 id="rt"><i class="bi bi-bullseye text-muted"></i> Recommended topics</h2></div>
+        <div class="card-body d-flex flex-wrap gap-2">{% for name in weak_chapters %}<a class="chip" href="{% url 'search:results' %}?q={{ name|urlencode }}">{{ name }}</a>{% endfor %}</div>
+        {% if recommended_materials %}
+        <ul class="list-group list-group-flush border-top">
+          {% for m in recommended_materials %}<li class="list-group-item bg-transparent"><a href="{{ m.get_absolute_url }}" class="text-reset d-flex gap-2"><i class="bi bi-{{ m.icon }} text-muted"></i>{{ m.title }}</a></li>{% endfor %}
+        </ul>
+        {% endif %}
+      </section>
+      {% endif %}
+      {% if recommended_tests %}
+      <section class="pa-card" aria-labelledby="rtest">
+        <div class="pa-card-header"><h2 id="rtest">Recommended tests</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for t in recommended_tests %}<li class="list-group-item bg-transparent"><a href="{{ t.get_absolute_url }}" class="text-reset d-flex justify-content-between"><span>{{ t.title }}</span><i class="bi bi-play-circle"></i></a></li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  document.querySelectorAll("[data-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-filter]").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll("[data-state]").forEach((card) => {
+        const f = btn.dataset.filter;
+        card.hidden = !(f === "all" || card.dataset.state === f || (f === "unanswered" && card.dataset.state === "ungraded"));
+      });
+    });
+  });
+</script>
+{% endblock %}

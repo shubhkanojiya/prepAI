@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ subject.name }} — {{ board.short_name }} {{ class_level.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" %}
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <span class="icon-tile" style="background: color-mix(in srgb, {{ subject.color }} 14%, transparent); color: {{ subject.color }}"><i class="bi bi-{{ subject.icon }}"></i></span>
+      <div class="me-auto"><h1 class="mb-0">{{ subject.name }}</h1><p class="text-muted mb-0">{{ board.short_name }} · {{ class_level.name }}{% if subject.code %} · Code {{ subject.code }}{% endif %}</p></div>
+      <a href="{% url 'questions:frequency' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ subject.id }}" class="btn btn-soft"><i class="bi bi-bar-chart-line"></i> Frequency analysis</a>
+      <a href="{% url 'assistant:home' %}?q={{ 'Help me revise '|add:subject.name|urlencode }}" class="btn btn-ghost"><i class="bi bi-lightbulb"></i> Ask AI</a>
+    </div>
+    {% if subject.description %}<p class="text-2 mt-3 mb-0">{{ subject.description }}</p>{% endif %}
+  </header>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <h2 class="h5 mb-3">Chapters</h2>
+      <div class="d-grid gap-2">
+        {% for chapter in chapters %}
+        <div class="pa-card hoverable">
+          <div class="card-body d-flex gap-3 align-items-start">
+            <span class="icon-tile sm fw-bold">{{ chapter.number|default:forloop.counter }}</span>
+            <div class="min-w-0 flex-grow-1">
+              <a href="{{ chapter.get_absolute_url }}" class="fw-semibold text-reset stretched-link">{{ chapter.name }}</a>
+              <div class="meta mt-1"><span><i class="bi bi-question-circle"></i>{{ chapter.question_count }} questions</span><span><i class="bi bi-journal-text"></i>{{ chapter.material_count }} materials</span></div>
+              {% if chapter.topics.all %}
+              <div class="d-flex flex-wrap gap-1 mt-2">{% for topic in chapter.topics.all|slice:":5" %}<span class="badge-muted">{{ topic.name }}</span>{% endfor %}</div>
+              {% endif %}
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </div>
+        </div>
+        {% empty %}
+        {% include "components/empty_state.html" with icon="bookmark" title="No chapters yet" %}
+        {% endfor %}
+      </div>
+    </div>
+    <aside class="col-lg-4">
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2>Question papers</h2><a href="{% url 'papers:list' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ subject.id }}" class="small">View all</a></div>
+        <ul class="list-group list-group-flush">
+          {% for paper in papers %}
+          <li class="list-group-item bg-transparent"><a href="{{ paper.get_absolute_url }}" class="d-flex justify-content-between gap-2 text-reset"><span class="text-truncate">{{ paper.title }}</span>{% if paper.year %}<span class="badge-muted">{{ paper.year }}</span>{% endif %}</a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No papers yet.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2>Tests</h2><a href="{% url 'testengine:list' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ subject.id }}" class="small">View all</a></div>
+        <ul class="list-group list-group-flush">
+          {% for test in tests %}
+          <li class="list-group-item bg-transparent"><a href="{{ test.get_absolute_url }}" class="text-reset d-block"><span class="d-block text-truncate">{{ test.title }}</span><span class="small text-muted">{{ test.question_count }} Qs · {{ test.duration_minutes }} min</span></a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No tests yet.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="pa-card">
+        <div class="pa-card-header"><h2>Study material</h2><a href="{% url 'content:list' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ subject.id }}" class="small">View all</a></div>
+        <ul class="list-group list-group-flush">
+          {% for m in materials %}
+          <li class="list-group-item bg-transparent"><a href="{{ m.get_absolute_url }}" class="text-reset d-flex gap-2"><i class="bi bi-{{ m.icon }} text-muted"></i><span class="text-truncate">{{ m.title }}</span></a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No material yet.</li>{% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{# Global search bar. Params: compact (bool), value (str), autofocus (bool) #}
+<div class="search-shell {% if not compact %}mx-auto{% endif %}" data-search>
+  <form action="{% url 'search:results' %}" method="get" role="search" class="search-bar {% if compact %}compact{% endif %}">
+    <i class="bi bi-search text-muted me-1" aria-hidden="true"></i>
+    <label for="search-{{ compact|yesno:'c,h' }}" class="visually-hidden">Search PrepAI</label>
+    <input id="search-{{ compact|yesno:'c,h' }}" type="search" name="q" value="{{ value|default:'' }}" autocomplete="off"
+           placeholder="Search questions, subjects, chapters, papers or ask AI..." {% if autofocus %}autofocus{% endif %}>
+    <a href="{% url 'scanner:scanner' %}?camera=1" class="search-action" aria-label="Scan a question with your camera" title="Scan with camera"><i class="bi bi-camera"></i></a>
+    <a href="{% url 'scanner:scanner' %}" class="search-action d-none d-sm-inline-flex" aria-label="Upload a question image" title="Upload image"><i class="bi bi-upload"></i></a>
+    <button type="submit" class="btn btn-primary {% if compact %}btn-sm{% endif %} px-3 px-md-4">Search</button>
+  </form>
+  <div class="search-suggest" role="listbox" aria-label="Search suggestions"></div>
+</div>

@@ -1,0 +1,6 @@
+<nav class="pa-tabs mb-4" aria-label="Account sections">
+  <a href="{% url 'accounts:profile' %}" class="chip {% if active == 'profile' %}active{% endif %}"><i class="bi bi-person"></i> Profile</a>
+  <a href="{% url 'accounts:profile_edit' %}" class="chip {% if active == 'edit' %}active{% endif %}"><i class="bi bi-pencil"></i> Edit profile</a>
+  <a href="{% url 'accounts:preferences' %}" class="chip {% if active == 'preferences' %}active{% endif %}"><i class="bi bi-sliders"></i> Preferences</a>
+  <a href="{% url 'accounts:password_change' %}" class="chip {% if active == 'password' %}active{% endif %}"><i class="bi bi-key"></i> Change password</a>
+</nav>

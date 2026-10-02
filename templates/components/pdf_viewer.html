@@ -1,0 +1,27 @@
+{# Params: src (inline PDF url), download_url, title, bookmark_obj (optional), full_page_url (optional) #}
+{% load prepai_tags %}
+<div class="pdf-viewer pa-card overflow-hidden" data-pdf-viewer data-src="{{ src }}" tabindex="0" aria-label="PDF viewer for {{ title }}">
+  <div class="pdf-toolbar" role="toolbar" aria-label="PDF controls">
+    <button type="button" class="btn btn-ghost btn-sm" data-action="prev" aria-label="Previous page"><i class="bi bi-chevron-up"></i></button>
+    <button type="button" class="btn btn-ghost btn-sm" data-action="next" aria-label="Next page"><i class="bi bi-chevron-down"></i></button>
+    <span class="small d-inline-flex align-items-center gap-1">
+      <label for="pdf-page-{{ title|slugify }}" class="visually-hidden">Page number</label>
+      <input id="pdf-page-{{ title|slugify }}" type="number" min="1" value="1" class="form-control form-control-sm page-input" data-page-input>
+      <span class="text-muted">/ <span data-page-count>–</span></span>
+    </span>
+    <span class="vr mx-1"></span>
+    <button type="button" class="btn btn-ghost btn-sm" data-action="zoom-out" aria-label="Zoom out"><i class="bi bi-zoom-out"></i></button>
+    <span class="small text-muted" data-zoom-label style="min-width:44px;text-align:center">100%</span>
+    <button type="button" class="btn btn-ghost btn-sm" data-action="zoom-in" aria-label="Zoom in"><i class="bi bi-zoom-in"></i></button>
+    <button type="button" class="btn btn-ghost btn-sm d-none d-sm-inline-block" data-action="fit" aria-label="Fit to width"><i class="bi bi-arrows-expand-vertical"></i></button>
+    <span class="ms-auto d-flex gap-1">
+      {% if bookmark_obj %}{% bookmark_button bookmark_obj "btn-sm" False %}{% endif %}
+      {% if full_page_url %}<a href="{{ full_page_url }}" class="btn btn-ghost btn-sm d-none d-md-inline-block" aria-label="Open viewer in a new page"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}
+      <a href="{{ download_url }}" class="btn btn-ghost btn-sm" aria-label="Download PDF"><i class="bi bi-download"></i></a>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="fullscreen" aria-label="Toggle fullscreen"><i class="bi bi-fullscreen"></i></button>
+    </span>
+  </div>
+  <div class="pdf-stage" data-stage>
+    <div data-status></div>
+  </div>
+</div>

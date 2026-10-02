@@ -1,0 +1,11 @@
+{# Params: board, class_level, subject, chapter, topic, extra (label for last crumb) #}
+<nav aria-label="Breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'boards:board_list' %}">Boards</a></li>
+    {% if board %}<li class="breadcrumb-item {% if not class_level %}active{% endif %}" {% if not class_level %}aria-current="page"{% endif %}>{% if class_level %}<a href="{{ board.get_absolute_url }}">{{ board.short_name }}</a>{% else %}{{ board.short_name }}{% endif %}</li>{% endif %}
+    {% if class_level %}<li class="breadcrumb-item {% if not subject %}active{% endif %}">{% if subject %}<a href="{{ class_level.get_absolute_url }}">{{ class_level.name }}</a>{% else %}{{ class_level.name }}{% endif %}</li>{% endif %}
+    {% if subject %}<li class="breadcrumb-item {% if not chapter %}active{% endif %}">{% if chapter %}<a href="{{ subject.get_absolute_url }}">{{ subject.name }}</a>{% else %}{{ subject.name }}{% endif %}</li>{% endif %}
+    {% if chapter %}<li class="breadcrumb-item {% if not topic %}active{% endif %}">{% if topic %}<a href="{{ chapter.get_absolute_url }}">{{ chapter.name }}</a>{% else %}{{ chapter.name }}{% endif %}</li>{% endif %}
+    {% if topic %}<li class="breadcrumb-item active" aria-current="page">{{ topic.name }}</li>{% endif %}
+  </ol>
+</nav>

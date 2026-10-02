@@ -1,0 +1,7 @@
+{% if kind %}
+<button type="button" class="btn btn-soft {{ size }} {% if is_bookmarked %}active{% endif %}"
+        data-bookmark data-kind="{{ kind }}" data-id="{{ object_id }}"
+        aria-pressed="{{ is_bookmarked|yesno:'true,false' }}" aria-label="{% if is_bookmarked %}Remove bookmark{% else %}Save to bookmarks{% endif %}">
+  <i class="bi {% if is_bookmarked %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>{% if show_label %} <span data-label>{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>{% endif %}
+</button>
+{% endif %}

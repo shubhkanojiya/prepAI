@@ -1,0 +1,55 @@
+{% load static %}
+<footer class="pa-footer" aria-label="Footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <a class="brand mb-2" href="{% url 'core:home' %}"><img src="{% static 'img/logo.svg' %}" class="brand-mark" alt="" width="34" height="34"><span>Prep<b>AI</b></span></a>
+        <p class="text-muted small mt-2 mb-3" style="max-width:320px">{{ SITE_TAGLINE }}. Question papers, previous-year papers, mock tests and AI study help for CBSE, ICSE and state boards.</p>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Practice</h6>
+        <ul class="list-unstyled small mb-0">
+          <li><a href="{% url 'papers:list' %}">Question Papers</a></li>
+          <li><a href="{% url 'papers:previous_year' %}">Previous Years</a></li>
+          <li><a href="{% url 'testengine:list' %}">Test Papers</a></li>
+          <li><a href="{% url 'testengine:mock_list' %}">Mock Tests</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Learn</h6>
+        <ul class="list-unstyled small mb-0">
+          <li><a href="{% url 'boards:board_list' %}">Boards</a></li>
+          <li><a href="{% url 'content:list' %}">Study Material</a></li>
+          <li><a href="{% url 'questions:list' %}">Question Bank</a></li>
+          <li><a href="{% url 'questions:frequency' %}">Frequency Analysis</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>AI tools</h6>
+        <ul class="list-unstyled small mb-0">
+          <li><a href="{% url 'scanner:scanner' %}">AI Scanner</a></li>
+          <li><a href="{% url 'assistant:home' %}">AI Assistant</a></li>
+          <li><a href="{% url 'questions:predictor' %}">Question Predictor</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Account</h6>
+        <ul class="list-unstyled small mb-0">
+          {% if user.is_authenticated %}
+            <li><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+            <li><a href="{% url 'bookmarks:list' %}">Saved</a></li>
+            <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
+          {% else %}
+            <li><a href="{% url 'accounts:signup' %}">Sign Up</a></li>
+            <li><a href="{% url 'accounts:login' %}">Login</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    <hr class="my-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 small text-muted">
+      <span>&copy; {% now "Y" %} {{ SITE_NAME }}. Built for Indian board exam students.</span>
+      <span>AI answers can contain mistakes — always verify with your textbook and teachers.</span>
+    </div>
+  </div>
+</footer>

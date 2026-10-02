@@ -1,0 +1,21 @@
+{% load prepai_tags %}
+<article class="pa-card hoverable">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <span class="badge-muted">{{ question.get_question_type_display }}</span>
+      <span class="badge-{% if question.difficulty == 'easy' %}good{% elif question.difficulty == 'hard' %}bad{% else %}warn{% endif %}">{{ question.get_difficulty_display }}</span>
+      <span class="badge-muted">{{ question.marks|floatformat:"-2" }} mark{{ question.marks|pluralize }}</span>
+      {% if question.appearance_years %}<span class="badge-soft" title="Recorded appearances in stored previous-year papers"><i class="bi bi-clock-history"></i> Asked in {{ question.appearance_years }} year{{ question.appearance_years|pluralize }}</span>{% endif %}
+      {% if question.is_important %}<span class="badge-warn"><i class="bi bi-star-fill"></i> Important</span>{% endif %}
+      {% if question.is_sample %}<span class="badge-sample">Sample</span>{% endif %}
+    </div>
+    <p class="mb-2 line-clamp-3" data-render-math>{{ question.text }}</p>
+    <div class="d-flex justify-content-between align-items-center gap-2">
+      <span class="small text-muted text-truncate">{% if show_subject %}{{ question.subject.name }}{% if question.chapter %} · {{ question.chapter.name }}{% endif %}{% endif %}</span>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <a href="{{ question.get_absolute_url }}" class="btn btn-soft btn-sm">Answer & analysis</a>
+        {% bookmark_button question "btn-sm" False %}
+      </div>
+    </div>
+  </div>
+</article>

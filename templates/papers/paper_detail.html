@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static prepai_tags %}
+{% block title %}{{ paper.title }} · {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ paper.title }} — {{ paper.subject.name }}, {{ paper.subject.class_level }}. View online or download the PDF on PrepAI.{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" with board=paper.subject.class_level.board class_level=paper.subject.class_level subject=paper.subject %}
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <span class="badge-soft">{{ paper.get_paper_type_display }}</span>
+      {% if paper.year %}<span class="badge-muted">{{ paper.year }}</span>{% endif %}
+      <span class="badge-muted">{{ paper.get_exam_type_display }}</span>
+      <span class="badge-muted">{{ paper.get_difficulty_display }}</span>
+      {% if paper.is_sample %}<span class="badge-sample" title="Demo content created for development">Sample content</span>{% endif %}
+    </div>
+    <h1>{{ paper.title }}</h1>
+    <div class="meta">
+      <span><i class="bi bi-bank"></i>{{ paper.subject.class_level.board.name }}</span>
+      <span><i class="bi bi-mortarboard"></i>{{ paper.subject.class_level.name }}</span>
+      <span><i class="bi bi-book"></i>{{ paper.subject.name }}</span>
+      {% if paper.total_marks %}<span><i class="bi bi-award"></i>{{ paper.total_marks }} marks</span>{% endif %}
+      {% if paper.duration_minutes %}<span><i class="bi bi-stopwatch"></i>{{ paper.duration_minutes }} min</span>{% endif %}
+      <span><i class="bi bi-download"></i>{{ paper.download_count }} downloads</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      {% if paper.pdf %}<a href="{% url 'papers:download' paper.slug %}" class="btn btn-primary"><i class="bi bi-download"></i> Download PDF{% if paper.file_size %} <span class="opacity-75 small">({{ paper.file_size|filesize }})</span>{% endif %}</a>{% endif %}
+      {% if paper.solution_pdf %}<a href="{% url 'papers:download' paper.slug %}?solutions=1" class="btn btn-ghost"><i class="bi bi-check2-square"></i> Solutions</a>{% endif %}
+      {% bookmark_button paper %}
+      <button type="button" class="btn btn-ghost" data-share data-title="{{ paper.title }}"><i class="bi bi-share"></i> Share</button>
+    </div>
+  </header>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% if paper.description %}<div class="pa-card mb-4"><div class="card-body"><h2 class="h6">About this paper</h2><p class="mb-0 text-2">{{ paper.description }}</p></div></div>{% endif %}
+      {% if paper.pdf %}
+        {% url 'papers:file' paper.slug as file_url %}{% url 'papers:download' paper.slug as dl_url %}{% url 'papers:viewer' paper.slug as full_url %}
+        {% include "components/pdf_viewer.html" with src=file_url download_url=dl_url title=paper.title full_page_url=full_url %}
+      {% else %}
+        {% include "components/empty_state.html" with icon="file-earmark" title="PDF not uploaded yet" message="The question list below is still available." %}
+      {% endif %}
+
+      <section class="pa-card mt-4" aria-labelledby="iq-title">
+        <div class="pa-card-header"><h2 id="iq-title"><i class="bi bi-star text-muted"></i> Important questions from this paper</h2></div>
+        <div class="card-body">
+          <p class="small text-muted">Ranked by how many years each question appeared across all stored papers.</p>
+          <ol class="mb-0 ps-3">
+            {% for q in important_questions %}
+            <li class="mb-3">
+              <a href="{{ q.get_absolute_url }}" class="text-reset">{{ q.text|truncatechars:180 }}</a>
+              <div class="d-flex gap-1 mt-1">
+                {% if q.appearance_years %}<span class="badge-soft">Historical frequency: {{ q.appearance_years }} year{{ q.appearance_years|pluralize }}</span>{% endif %}
+                {% if q.chapter %}<span class="badge-muted">{{ q.chapter.name }}</span>{% endif %}
+              </div>
+            </li>
+            {% empty %}
+            <p class="small text-muted mb-0">Questions from this paper haven't been added to the question bank yet.</p>
+            {% endfor %}
+          </ol>
+          {% if important_questions %}<div class="disclaimer mt-2" role="note"><i class="bi bi-info-circle-fill"></i><div>Historical analysis does not guarantee appearance in a future examination.</div></div>{% endif %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="col-lg-4">
+      {% if related_tests %}
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2>Attempt as a test</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for t in related_tests %}<li class="list-group-item bg-transparent"><a href="{{ t.get_absolute_url }}" class="text-reset d-flex justify-content-between"><span>{{ t.title }}</span><i class="bi bi-play-circle"></i></a></li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      <div class="pa-card">
+        <div class="pa-card-header"><h2>Related papers</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for p in related_papers %}
+          <li class="list-group-item bg-transparent"><a href="{{ p.get_absolute_url }}" class="text-reset d-block"><span class="d-block text-truncate">{{ p.title }}</span><span class="small text-muted">{{ p.get_paper_type_display }}{% if p.year %} · {{ p.year }}{% endif %}</span></a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No related papers yet.</li>{% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}{% if paper.pdf %}<script type="module" src="{% static 'js/pdf-viewer.js' %}"></script>{% endif %}{% endblock %}

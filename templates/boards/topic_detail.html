@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} — {{ chapter.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" %}
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="me-auto"><p class="small text-muted mb-1">{{ subject.name }} · {{ chapter.name }}</p><h1 class="mb-0">{{ topic.name }}</h1></div>
+      <a href="{% url 'assistant:home' %}?q={{ 'Explain '|add:topic.name|add:' in simple language'|urlencode }}" class="btn btn-soft"><i class="bi bi-lightbulb"></i> Explain with AI</a>
+    </div>
+    {% if topic.description %}<p class="text-2 mt-3 mb-0">{{ topic.description }}</p>{% endif %}
+  </header>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <h2 class="h5 mb-3">Questions on this topic</h2>
+      <div class="d-grid gap-2">
+        {% for question in questions %}{% include "components/question_card.html" %}
+        {% empty %}{% include "components/empty_state.html" with icon="question-circle" title="No questions for this topic yet" %}{% endfor %}
+      </div>
+    </div>
+    <aside class="col-lg-4">
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2>Study material</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for m in materials %}<li class="list-group-item bg-transparent"><a href="{{ m.get_absolute_url }}" class="text-reset d-flex gap-2"><i class="bi bi-{{ m.icon }} text-muted"></i>{{ m.title }}</a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No material for this topic yet.</li>{% endfor %}
+        </ul>
+      </div>
+      {% if sibling_topics %}
+      <div class="pa-card">
+        <div class="pa-card-header"><h2>Other topics in this chapter</h2></div>
+        <div class="card-body d-flex flex-wrap gap-2">{% for t in sibling_topics %}<a href="{{ t.get_absolute_url }}" class="chip">{{ t.name }}</a>{% endfor %}</div>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

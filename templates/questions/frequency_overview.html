@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Question Prediction &amp; Frequency Analysis · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <span class="badge-soft mb-2 d-inline-block"><i class="bi bi-lightbulb"></i> AI-assisted analysis</span>
+    <h1>Question Prediction &amp; Frequency Analysis</h1>
+    <p class="text-muted mb-0" style="max-width:760px">See which questions and concepts appeared most often in previous-year papers stored on PrepAI, and how recently — so you can set your preparation priorities.</p>
+  </header>
+
+  <a href="{% url 'questions:predictor' %}" class="pa-card card-body d-flex align-items-center gap-3 mb-3">
+    <span class="icon-tile sm"><i class="bi bi-graph-up-arrow"></i></span>
+    <span class="flex-grow-1"><span class="fw-semibold d-block">Have a specific question?</span><span class="small text-muted">Use the Question Predictor to see its years of appearance and chances in your upcoming exam.</span></span>
+    <i class="bi bi-chevron-right text-muted"></i>
+  </a>
+  <div class="disclaimer mb-4" role="note"><i class="bi bi-info-circle-fill"></i><div><strong>Important:</strong> {{ disclaimer }} PrepAI does not predict exact exam questions; it summarises historical patterns from stored papers.</div></div>
+
+  <form method="get" class="filter-bar mb-4" data-auto-submit aria-label="Choose a subject">
+    <div class="row g-2 align-items-end">{% include "components/filter_bar.html" %}</div>
+  </form>
+
+  {% if not subject %}
+    {% include "components/empty_state.html" with icon="bar-chart-line" title="Choose a subject to analyse" message="Select your board, class and subject above." %}
+  {% else %}
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+      <h2 class="h4 mb-0">{{ subject.name }} <span class="text-muted fw-normal fs-6">{{ subject.class_level.board }} · {{ subject.class_level.name }}</span></h2>
+      <span class="small text-muted">Based on {{ overview.papers_analyzed }} stored paper{{ overview.papers_analyzed|pluralize }}{% if overview.reference_year %} · latest year {{ overview.reference_year }}{% endif %}</span>
+    </div>
+
+    {% if not overview.questions and not overview.chapters %}
+      {% include "components/empty_state.html" with icon="clock-history" title="No historical data yet" message="No previous-year appearances have been recorded for this subject. Administrators can link questions to papers in the admin panel." %}
+    {% else %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="pa-card" aria-labelledby="rq">
+          <div class="pa-card-header"><h3 id="rq">Most repeated questions</h3></div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead><tr><th>Question</th><th class="text-center">Historical frequency</th><th class="text-center">Last seen</th><th>Preparation priority</th></tr></thead>
+              <tbody>
+                {% for row in overview.questions %}
+                <tr>
+                  <td><a href="{{ row.question.get_absolute_url }}" class="text-reset">{{ row.question.text|truncatechars:110 }}</a><div class="small text-muted">{{ row.question.chapter.name|default:"" }} · {{ row.pattern }}</div></td>
+                  <td class="text-center fw-bold">{{ row.years }}×</td>
+                  <td class="text-center">{{ row.last_year }}</td>
+                  <td><span class="fw-semibold priority-{{ row.priority|lower }}">{{ row.priority }}</span></td>
+                </tr>
+                {% empty %}<tr><td colspan="4" class="text-muted small">No repeated questions recorded.</td></tr>{% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <aside class="col-lg-4">
+        <section class="pa-card mb-3" aria-labelledby="ch">
+          <div class="pa-card-header"><h3 id="ch">Chapters by appearances</h3></div>
+          <div class="card-body">
+            {% with top=overview.chapters.0.appearances %}
+            {% for chapter in overview.chapters %}
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1"><a href="{{ chapter.get_absolute_url }}" class="text-reset fw-semibold text-truncate">{{ chapter.name }}</a><span class="text-muted flex-shrink-0 ms-2">{{ chapter.appearances }} Qs · {{ chapter.appearance_years }} yrs</span></div>
+                <div class="progress" role="progressbar" aria-label="{{ chapter.name }} appearances" aria-valuenow="{{ chapter.appearances }}" aria-valuemin="0" aria-valuemax="{{ top }}"><div class="progress-bar" style="width: {% widthratio chapter.appearances top 100 %}%"></div></div>
+              </div>
+            {% empty %}<p class="small text-muted mb-0">No data.</p>{% endfor %}
+            {% endwith %}
+          </div>
+        </section>
+        <section class="pa-card" aria-labelledby="cc">
+          <div class="pa-card-header"><h3 id="cc">Repeated concepts</h3></div>
+          <ul class="list-group list-group-flush">
+            {% for concept in overview.concepts %}
+              <li class="list-group-item bg-transparent d-flex justify-content-between"><span>{{ concept.name }}</span><span class="badge-soft">{{ concept.appearance_years }} yr{{ concept.appearance_years|pluralize }}</span></li>
+            {% empty %}<li class="list-group-item bg-transparent small text-muted">No concept data.</li>{% endfor %}
+          </ul>
+        </section>
+      </aside>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

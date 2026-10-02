@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}{% if query %}“{{ query }}” — Search{% else %}Search{% endif %} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <h1 class="visually-hidden">Search</h1>
+    {% include "components/search_bar.html" with compact=True value=query autofocus=True %}
+  </header>
+
+  <form method="get" class="filter-bar mb-3" data-auto-submit aria-label="Search filters">
+    <input type="hidden" name="q" value="{{ query }}">
+    {% if filters.type %}<input type="hidden" name="type" value="{{ filters.type }}">{% endif %}
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="s-board">Board</label>
+        <select class="form-select form-select-sm" name="board" id="s-board">
+          <option value="">All boards</option>
+          {% for b in filter_boards %}<option value="{{ b.id }}" {% if filters.board == b.id %}selected{% endif %}>{{ b.short_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="s-class">Class</label>
+        <select class="form-select form-select-sm" name="class_level" id="s-class" {% if not filters.board %}disabled{% endif %}>
+          <option value="">All classes</option>
+          {% for c in filter_classes %}<option value="{{ c.id }}" {% if filters.class_level == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="s-subject">Subject</label>
+        <select class="form-select form-select-sm" name="subject" id="s-subject" {% if not filters.class_level %}disabled{% endif %}>
+          <option value="">All subjects</option>
+          {% for s in filter_subjects %}<option value="{{ s.id }}" {% if filters.subject == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="s-year">Year</label>
+        <input type="number" class="form-control form-control-sm" name="year" id="s-year" min="1990" max="2100" value="{{ filters.year|default:'' }}" placeholder="Any" onchange="this.form.submit()">
+      </div>
+    </div>
+  </form>
+
+  <nav class="pa-tabs mb-4" aria-label="Result categories">
+    <a href="{% url_replace type='' %}" class="chip {% if not filters.type %}active{% endif %}">All</a>
+    {% for c in categories %}<a href="{% url_replace type=c.key %}" class="chip {% if filters.type == c.key %}active{% endif %}"><i class="bi bi-{{ c.icon }}"></i> {{ c.label }}</a>{% endfor %}
+  </nav>
+
+  {% if not query and not groups %}
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        {% include "components/empty_state.html" with icon="search" title="Search everything on PrepAI" message="Boards, classes, subjects, chapters, topics, questions, papers, tests and study material." %}
+        {% if recent_searches %}
+        <div class="text-center">
+          <p class="small text-muted mb-2">Recent searches</p>
+          <div class="d-flex flex-wrap justify-content-center gap-2">{% for r in recent_searches %}<a href="?q={{ r|urlencode }}" class="chip"><i class="bi bi-clock-history"></i> {{ r }}</a>{% endfor %}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <p class="small text-muted">{{ total }} result{{ total|pluralize }}{% if query %} for “<strong>{{ query }}</strong>”{% endif %}</p>
+    {% for group in groups %}
+    <section class="mb-4" aria-labelledby="g-{{ group.key }}">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 id="g-{{ group.key }}" class="h6 mb-0"><i class="bi bi-{{ group.icon }} text-muted"></i> {{ group.label }} <span class="text-muted fw-normal">({{ group.count }})</span></h2>
+        {% if not filters.type and group.count > group.items|length %}<a href="{% url_replace type=group.key %}" class="small">See all</a>{% endif %}
+      </div>
+      <div class="pa-card">
+        <ul class="list-group list-group-flush">
+          {% for item in group.items %}
+          <li class="list-group-item bg-transparent">
+            <a href="{{ item.url }}" class="d-flex justify-content-between gap-3 text-reset">
+              <span class="min-w-0"><span class="d-block fw-semibold text-truncate">{{ item.title }}</span><span class="small text-muted">{{ item.subtitle }}</span></span>
+              {% if item.badge %}<span class="badge-muted align-self-center flex-shrink-0">{{ item.badge }}</span>{% endif %}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+    {% empty %}
+    <div class="text-center">
+      {% include "components/empty_state.html" with icon="emoji-neutral" title="No results found" message="Try different keywords or remove filters." %}
+      {% if query %}<a href="{% url 'assistant:home' %}?q={{ query|urlencode }}" class="btn btn-accent"><i class="bi bi-lightbulb"></i> Ask the AI Assistant instead</a>{% endif %}
+    </div>
+    {% endfor %}
+    {% if groups and query %}
+    <div class="pa-card card-body d-flex flex-wrap align-items-center gap-3 mt-4">
+      <span class="icon-tile sm"><i class="bi bi-lightbulb"></i></span>
+      <span class="flex-grow-1">Want an explanation instead? Ask PrepAI about “{{ query }}”.</span>
+      <a href="{% url 'assistant:home' %}?q={{ query|urlencode }}" class="btn btn-soft">Ask AI</a>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

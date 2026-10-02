@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}Question — {{ question.subject.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" with board=question.subject.class_level.board class_level=question.subject.class_level subject=question.subject chapter=question.chapter topic=question.topic %}
+  </header>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <article class="pa-card mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex flex-wrap gap-1 mb-3">
+            <span class="badge-muted">{{ question.get_question_type_display }}</span>
+            <span class="badge-{% if question.difficulty == 'easy' %}good{% elif question.difficulty == 'hard' %}bad{% else %}warn{% endif %}">{{ question.get_difficulty_display }}</span>
+            <span class="badge-muted">{{ question.marks|floatformat:"-2" }} mark{{ question.marks|pluralize }}</span>
+            {% if question.is_important %}<span class="badge-warn"><i class="bi bi-star-fill"></i> Important</span>{% endif %}
+            {% if question.is_sample %}<span class="badge-sample">Sample</span>{% endif %}
+          </div>
+          <h1 class="visually-hidden">Question</h1>
+          <div class="question-text mb-3" data-render-math>{{ question.text }}</div>
+          {% if question.image %}<img src="{{ question.image.url }}" alt="Diagram for this question" class="img-fluid rounded-xl mb-3" loading="lazy">{% endif %}
+
+          {% if question.options.all %}
+          <ol class="option-list mb-3" type="A">
+            {% for option in question.options.all %}
+            <li class="option-item" data-option data-correct="{{ option.is_correct|yesno:'1,0' }}">
+              <span class="option-letter">{% cycle 'A' 'B' 'C' 'D' 'E' 'F' %}</span><span data-render-math>{{ option.text }}</span>
+            </li>
+            {% endfor %}
+          </ol>
+          {% endif %}
+
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#answer" aria-expanded="false" aria-controls="answer" id="revealBtn"><i class="bi bi-eye"></i> Show answer</button>
+            {% bookmark_button question %}
+            <button type="button" class="btn btn-ghost" data-share data-title="PrepAI question"><i class="bi bi-share"></i> Share</button>
+            <a href="{% url 'assistant:home' %}?q={{ 'Explain this question step by step: '|add:question.text|truncatechars:900|urlencode }}" class="btn btn-ghost"><i class="bi bi-lightbulb"></i> Ask AI</a>
+          </div>
+
+          <div class="collapse mt-4" id="answer">
+            {% if question.answer %}
+            <h2 class="h6 text-uppercase small text-muted fw-bold">Answer</h2>
+            <div class="prose mb-3" data-render-math>{{ question.answer|markdown }}</div>
+            {% endif %}
+            {% if question.explanation %}
+            <h2 class="h6 text-uppercase small text-muted fw-bold">Explanation</h2>
+            <div class="prose" data-render-math>{{ question.explanation|markdown }}</div>
+            {% endif %}
+            {% if not question.answer and not question.explanation and not question.options.all %}<p class="text-muted mb-0">No answer has been added for this question yet.</p>{% endif %}
+          </div>
+        </div>
+      </article>
+
+      {% include "questions/_frequency_panel.html" %}
+    </div>
+
+    <aside class="col-lg-4">
+      <div class="pa-card mb-3">
+        <div class="card-body">
+          <h2 class="h6">About this question</h2>
+          <dl class="small mb-0">
+            <dt class="text-muted fw-semibold">Subject</dt><dd><a href="{{ question.subject.get_absolute_url }}">{{ question.subject.name }}</a> · {{ question.subject.class_level }}</dd>
+            {% if question.chapter %}<dt class="text-muted fw-semibold">Chapter</dt><dd><a href="{{ question.chapter.get_absolute_url }}">{{ question.chapter.name }}</a></dd>{% endif %}
+            {% if question.topic %}<dt class="text-muted fw-semibold">Topic</dt><dd><a href="{{ question.topic.get_absolute_url }}">{{ question.topic.name }}</a></dd>{% endif %}
+            {% if question.concepts.all %}<dt class="text-muted fw-semibold">Concepts</dt><dd>{% for c in question.concepts.all %}<span class="badge-soft me-1">{{ c.name }}</span>{% endfor %}</dd>{% endif %}
+            <dt class="text-muted fw-semibold">Source</dt><dd class="mb-0">{{ question.get_source_display }}</dd>
+          </dl>
+        </div>
+      </div>
+      <a href="{% url 'questions:frequency' %}?board={{ question.subject.class_level.board_id }}&class_level={{ question.subject.class_level_id }}&subject={{ question.subject_id }}" class="pa-card card-body d-flex gap-3 align-items-center">
+        <span class="icon-tile sm"><i class="bi bi-bar-chart-line"></i></span>
+        <span><span class="fw-semibold d-block">Subject frequency analysis</span><span class="small text-muted">Most repeated questions &amp; concepts in {{ question.subject.name }}</span></span>
+      </a>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  // Highlight the correct option(s) when the answer is revealed.
+  document.getElementById("answer")?.addEventListener("show.bs.collapse", () => {
+    document.querySelectorAll("[data-option]").forEach((el) => {
+      if (el.dataset.correct === "1") el.classList.add("correct");
+    });
+    const btn = document.getElementById("revealBtn");
+    btn.innerHTML = '<i class="bi bi-eye-slash"></i> Hide answer';
+  });
+  document.getElementById("answer")?.addEventListener("hide.bs.collapse", () => {
+    document.querySelectorAll("[data-option]").forEach((el) => el.classList.remove("correct"));
+    document.getElementById("revealBtn").innerHTML = '<i class="bi bi-eye"></i> Show answer';
+  });
+</script>
+{% endblock %}

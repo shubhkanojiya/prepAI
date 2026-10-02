@@ -1,0 +1,31 @@
+{# Board → Class → Subject → Chapter filter selects. Include inside a <form data-auto-submit>. #}
+<div class="col-6 col-md">
+  <label class="form-label small mb-1" for="f-board">Board</label>
+  <select class="form-select form-select-sm" name="board" id="f-board">
+    <option value="">All boards</option>
+    {% for b in filter_boards %}<option value="{{ b.id }}" {% if selected.board == b.id %}selected{% endif %}>{{ b.short_name|default:b.name }}</option>{% endfor %}
+  </select>
+</div>
+<div class="col-6 col-md">
+  <label class="form-label small mb-1" for="f-class">Class</label>
+  <select class="form-select form-select-sm" name="class_level" id="f-class" {% if not selected.board %}disabled{% endif %}>
+    <option value="">{% if selected.board %}All classes{% else %}Select board first{% endif %}</option>
+    {% for c in filter_classes %}<option value="{{ c.id }}" {% if selected.class_level == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+</div>
+<div class="col-6 col-md">
+  <label class="form-label small mb-1" for="f-subject">Subject</label>
+  <select class="form-select form-select-sm" name="subject" id="f-subject" {% if not selected.class_level %}disabled{% endif %}>
+    <option value="">{% if selected.class_level %}All subjects{% else %}Select class first{% endif %}</option>
+    {% for s in filter_subjects %}<option value="{{ s.id }}" {% if selected.subject == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+  </select>
+</div>
+{% if show_chapter_filter %}
+<div class="col-6 col-md">
+  <label class="form-label small mb-1" for="f-chapter">Chapter</label>
+  <select class="form-select form-select-sm" name="chapter" id="f-chapter" {% if not selected.subject %}disabled{% endif %}>
+    <option value="">{% if selected.subject %}All chapters{% else %}Select subject first{% endif %}</option>
+    {% for c in filter_chapters %}<option value="{{ c.id }}" {% if selected.chapter == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+</div>
+{% endif %}

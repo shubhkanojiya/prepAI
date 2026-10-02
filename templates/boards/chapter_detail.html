@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}{{ chapter.name }} — {{ subject.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" %}
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="me-auto">
+        <p class="small text-muted mb-1">{{ subject.name }} · Chapter {{ chapter.number|default:"" }}</p>
+        <h1 class="mb-0">{{ chapter.name }}</h1>
+      </div>
+      {% if tests %}<a href="{{ tests.0.get_absolute_url }}" class="btn btn-primary"><i class="bi bi-play-fill"></i> Take chapter test</a>{% endif %}
+      <a href="{% url 'assistant:home' %}?q={{ 'Help me revise the chapter '|add:chapter.name|urlencode }}" class="btn btn-ghost"><i class="bi bi-lightbulb"></i> Revise with AI</a>
+    </div>
+    {% if chapter.description %}<p class="text-2 mt-3 mb-0" style="max-width:800px">{{ chapter.description }}</p>{% endif %}
+  </header>
+
+  {% if topics %}
+  <section class="mb-4" aria-label="Topics">
+    <h2 class="h6 text-muted text-uppercase small fw-bold mb-2">Topics</h2>
+    <div class="d-flex flex-wrap gap-2">{% for topic in topics %}<a href="{{ topic.get_absolute_url }}" class="chip"><i class="bi bi-diagram-3"></i> {{ topic.name }}</a>{% endfor %}</div>
+  </section>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section class="mb-4" aria-labelledby="mat-h">
+        <h2 id="mat-h" class="h5 mb-3">Study material</h2>
+        <div class="row g-3">
+          {% for material in materials %}<div class="col-md-6">{% include "components/material_card.html" %}</div>
+          {% empty %}<div class="col-12"><p class="text-muted small mb-0">No study material for this chapter yet.</p></div>{% endfor %}
+        </div>
+      </section>
+
+      <section aria-labelledby="q-h">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 id="q-h" class="h5 mb-0">Practice questions <span class="text-muted fw-normal">({{ question_total }})</span></h2>
+          <a href="{% url 'questions:list' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ subject.id }}&chapter={{ chapter.id }}" class="btn btn-ghost btn-sm">All questions</a>
+        </div>
+        <div class="d-grid gap-2">
+          {% for question in questions %}{% include "components/question_card.html" %}
+          {% empty %}{% include "components/empty_state.html" with icon="question-circle" title="No questions yet" %}{% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="col-lg-4">
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2><i class="bi bi-clock-history text-muted"></i> Previous-year questions</h2></div>
+        <div class="card-body">
+          {% for q in pyq %}
+            <a href="{{ q.get_absolute_url }}" class="d-block text-reset mb-3">
+              <span class="small line-clamp-2">{{ q.text }}</span>
+              <span class="badge-soft mt-1 d-inline-block">Asked in {{ q.appearance_years }} year{{ q.appearance_years|pluralize }}</span>
+            </a>
+          {% empty %}<p class="small text-muted mb-0">No previous-year appearances recorded for this chapter yet.</p>{% endfor %}
+        </div>
+      </div>
+      <div class="pa-card mb-3">
+        <div class="pa-card-header"><h2>Tests</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for test in tests %}
+          <li class="list-group-item bg-transparent"><a href="{{ test.get_absolute_url }}" class="text-reset d-block"><span class="d-block">{{ test.title }}</span><span class="small text-muted">{{ test.question_count }} Qs · {{ test.duration_minutes }} min</span></a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No tests for this chapter yet.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="pa-card">
+        <div class="pa-card-header"><h2>Recommended papers</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for paper in papers %}
+          <li class="list-group-item bg-transparent"><a href="{{ paper.get_absolute_url }}" class="text-reset d-flex justify-content-between gap-2"><span class="text-truncate">{{ paper.title }}</span>{% if paper.year %}<span class="badge-muted">{{ paper.year }}</span>{% endif %}</a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No papers yet.</li>{% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ board.short_name }} {{ class_level.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" %}
+    <h1>{{ board.short_name }} {{ class_level.name }}</h1>
+    <p class="text-muted mb-0">Choose a subject to see chapters, papers, tests and study material.</p>
+  </header>
+  <div class="row g-3">
+    {% for subject in subjects %}
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ subject.get_absolute_url }}" class="pa-card card-body h-100 d-flex gap-3">
+        <span class="icon-tile" style="background: color-mix(in srgb, {{ subject.color }} 14%, transparent); color: {{ subject.color }}"><i class="bi bi-{{ subject.icon }}"></i></span>
+        <span class="min-w-0">
+          <span class="fw-bold d-block">{{ subject.name }}</span>
+          <span class="meta mt-1"><span><i class="bi bi-bookmark"></i>{{ subject.chapter_count }} chapters</span><span><i class="bi bi-file-earmark-text"></i>{{ subject.paper_count }} papers</span></span>
+        </span>
+      </a>
+    </div>
+    {% empty %}
+    <div class="col-12">{% include "components/empty_state.html" with icon="book" title="No subjects yet" %}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

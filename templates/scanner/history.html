@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Scan history · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-2">
+    <div><h1>Scan history</h1><p class="text-muted mb-0">Questions you've scanned with the AI Scanner.</p></div>
+    <a href="{% url 'scanner:scanner' %}" class="btn btn-primary"><i class="bi bi-camera"></i> New scan</a>
+  </header>
+  <div class="row g-3">
+    {% for scan in page_obj %}
+    <div class="col-md-6 col-lg-4">
+      <a href="{{ scan.get_absolute_url }}" class="pa-card h-100 overflow-hidden">
+        {% if scan.image %}<img src="{{ scan.image.url }}" alt="" class="w-100" style="height:140px;object-fit:cover" loading="lazy">{% endif %}
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            <span class="{% if scan.status == 'completed' %}badge-good{% else %}badge-bad{% endif %}">{{ scan.get_status_display }}</span>
+            {% if scan.detected_subject_name %}<span class="badge-soft">{{ scan.detected_subject_name }}</span>{% endif %}
+          </div>
+          <p class="small mb-1 line-clamp-2">{{ scan }}</p>
+          <span class="small text-muted">{{ scan.created_at|timesince }} ago</span>
+        </div>
+      </a>
+    </div>
+    {% empty %}
+    <div class="col-12">{% url 'scanner:scanner' as scan_url %}{% include "components/empty_state.html" with icon="camera" title="No scans yet" message="Scan your first question to see it here." action_url=scan_url action_label="Open scanner" %}</div>
+    {% endfor %}
+  </div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

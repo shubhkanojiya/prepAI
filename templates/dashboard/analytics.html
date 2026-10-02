@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static prepai_tags %}
+{% block title %}Performance analytics · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <nav aria-label="Breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li><li class="breadcrumb-item active" aria-current="page">Analytics</li></ol></nav>
+    <h1>Performance analytics</h1>
+    <p class="text-muted mb-0">How you're doing across subjects, chapters and test types — and how it's changing over time.</p>
+  </header>
+
+  <section class="row g-3 mb-4" aria-label="Summary">
+    <div class="col-6 col-lg-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ summary.tests_attempted }}</div><div class="stat-label">Tests attempted</div></div></div>
+    <div class="col-6 col-lg-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ summary.average_score|floatformat:0 }}%</div><div class="stat-label">Average score</div></div></div>
+    <div class="col-6 col-lg-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ summary.best_score|floatformat:0 }}%</div><div class="stat-label">Best score</div></div></div>
+    <div class="col-6 col-lg-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ summary.questions_solved }}</div><div class="stat-label">Questions solved</div></div></div>
+  </section>
+
+  {% if not trend %}
+    {% url 'testengine:list' as tests_url %}{% include "components/empty_state.html" with icon="graph-up" title="No analytics yet" message="Complete a test to unlock charts and insights." action_url=tests_url action_label="Take a test" %}
+  {% else %}
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <section class="pa-card h-100" aria-labelledby="trendTitle">
+        <div class="pa-card-header"><h2 id="trendTitle">Score trend</h2><span class="small text-muted">Last {{ trend|length }} tests</span></div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="trendChart" role="img" aria-label="Line chart of test scores over time"></canvas></div>
+          <details class="mt-2 small"><summary class="text-muted">View as table</summary>
+            <table class="table table-sm mt-2 mb-0"><thead><tr><th>Date</th><th>Test</th><th class="text-end">Score</th><th class="text-end">Accuracy</th></tr></thead>
+            <tbody>{% for p in trend %}<tr><td>{{ p.date }}</td><td>{{ p.title }}</td><td class="text-end">{{ p.percentage }}%</td><td class="text-end">{{ p.accuracy }}%</td></tr>{% endfor %}</tbody></table>
+          </details>
+        </div>
+      </section>
+    </div>
+    <div class="col-lg-5">
+      <section class="pa-card h-100" aria-labelledby="subTitle">
+        <div class="pa-card-header"><h2 id="subTitle">Accuracy by subject</h2></div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="subjectChart" role="img" aria-label="Bar chart of accuracy by subject"></canvas></div>
+          <details class="mt-2 small"><summary class="text-muted">View as table</summary>
+            <table class="table table-sm mt-2 mb-0"><thead><tr><th>Subject</th><th class="text-end">Accuracy</th><th class="text-end">Score</th></tr></thead>
+            <tbody>{% for s in subject_chart %}<tr><td>{{ s.label }}</td><td class="text-end">{{ s.accuracy }}%</td><td class="text-end">{{ s.score }}%</td></tr>{% endfor %}</tbody></table>
+          </details>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <section class="pa-card h-100" aria-labelledby="typeTitle">
+        <div class="pa-card-header"><h2 id="typeTitle">Answers by test type</h2></div>
+        <div class="card-body">
+          <div class="chart-box"><canvas id="testTypeChart" role="img" aria-label="Stacked bar chart of correct, incorrect and skipped answers by test type"></canvas></div>
+          <details class="mt-2 small"><summary class="text-muted">View as table</summary>
+            <table class="table table-sm mt-2 mb-0"><thead><tr><th>Test type</th><th class="text-end">Correct</th><th class="text-end">Incorrect</th><th class="text-end">Skipped</th><th class="text-end">Accuracy</th></tr></thead>
+            <tbody>{% for r in test_type_chart %}<tr><td>{{ r.label }}</td><td class="text-end">{{ r.correct }}</td><td class="text-end">{{ r.incorrect }}</td><td class="text-end">{{ r.skipped }}</td><td class="text-end">{{ r.accuracy }}%</td></tr>{% endfor %}</tbody></table>
+          </details>
+        </div>
+      </section>
+    </div>
+    <div class="col-lg-5">
+      <section class="pa-card mb-3" aria-labelledby="weakT">
+        <div class="pa-card-header"><h2 id="weakT"><i class="bi bi-exclamation-diamond tone-bad"></i> Focus on these</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for c in weak_areas %}<li class="list-group-item bg-transparent d-flex justify-content-between small"><span><span class="fw-semibold">{{ c.chapter__name }}</span> <span class="text-muted">· {{ c.subject__name }}</span></span><span class="tone-bad fw-semibold">{{ c.accuracy|floatformat:0 }}%</span></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">No weak chapters (min. 3 questions attempted).</li>{% endfor %}
+        </ul>
+      </section>
+      <section class="pa-card" aria-labelledby="strongT">
+        <div class="pa-card-header"><h2 id="strongT"><i class="bi bi-trophy tone-good"></i> Strengths</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for c in strong_areas %}<li class="list-group-item bg-transparent d-flex justify-content-between small"><span><span class="fw-semibold">{{ c.chapter__name }}</span> <span class="text-muted">· {{ c.subject__name }}</span></span><span class="tone-good fw-semibold">{{ c.accuracy|floatformat:0 }}%</span></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">Score 80%+ in a chapter to list it here.</li>{% endfor %}
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="pa-card" aria-labelledby="chapT">
+    <div class="pa-card-header"><h2 id="chapT">Chapter breakdown</h2></div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Chapter</th><th>Subject</th><th class="text-end">Attempted</th><th class="text-end">Correct</th><th class="text-end">Incorrect</th><th class="text-end">Skipped</th><th class="text-end">Accuracy</th><th class="text-end">Time</th></tr></thead>
+        <tbody>
+          {% for c in chapter_rows %}
+          <tr><td class="fw-semibold">{{ c.chapter__name }}</td><td class="text-muted">{{ c.subject__name }}</td><td class="text-end">{{ c.attempted }}</td><td class="text-end">{{ c.correct }}</td><td class="text-end">{{ c.incorrect }}</td><td class="text-end">{{ c.skipped }}</td><td class="text-end fw-semibold tone-{{ c.accuracy|score_tone }}">{{ c.accuracy|floatformat:0 }}%</td><td class="text-end small text-muted">{{ c.time|duration }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{{ subject_chart|json_script:"subject-data" }}
+{{ trend|json_script:"trend-data" }}
+{{ test_type_chart|json_script:"testtype-data" }}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+{% endblock %}

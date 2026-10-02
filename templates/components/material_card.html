@@ -1,0 +1,25 @@
+{% load prepai_tags %}
+<article class="pa-card hoverable h-100">
+  <div class="card-body d-flex flex-column h-100">
+    <div class="d-flex align-items-start gap-3 mb-2">
+      <div class="icon-tile sm"><i class="bi bi-{{ material.icon }}"></i></div>
+      <div class="min-w-0">
+        <div class="d-flex flex-wrap gap-1 mb-1">
+          <span class="badge-soft">{{ material.get_material_type_display }}</span>
+          {% if material.is_sample %}<span class="badge-sample">Sample</span>{% endif %}
+        </div>
+        <h3 class="h6 mb-0"><a href="{{ material.get_absolute_url }}" class="text-reset">{{ material.title }}</a></h3>
+      </div>
+    </div>
+    <div class="meta mb-2">
+      <span><i class="bi bi-book"></i>{{ material.subject.name }}</span>
+      {% if material.chapter %}<span><i class="bi bi-bookmark"></i>{{ material.chapter.name }}</span>{% endif %}
+      <span><i class="bi bi-clock"></i>{{ material.reading_minutes }} min</span>
+    </div>
+    {% if material.summary %}<p class="small text-2 line-clamp-2 mb-3">{{ material.summary }}</p>{% endif %}
+    <div class="d-flex gap-2 mt-auto">
+      <a href="{{ material.get_absolute_url }}" class="btn btn-soft btn-sm">Read <i class="bi bi-arrow-right"></i></a>
+      {% bookmark_button material "btn-sm" False %}
+    </div>
+  </div>
+</article>

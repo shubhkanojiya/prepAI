@@ -1,0 +1,27 @@
+# Core framework
+Django>=5.2,<6.1
+djangorestframework>=3.16
+django-filter>=24.0
+
+# Configuration & database
+python-dotenv>=1.0
+dj-database-url>=2.2
+psycopg[binary]>=3.2
+
+# Media, static files
+Pillow>=11.0
+whitenoise>=6.8
+
+# AI provider SDKs. The AI layer lives in services/ai_service.py.
+anthropic>=1.0        # AI_PROVIDER=anthropic
+openai>=1.40          # AI_PROVIDER=groq | openrouter | openai_compatible
+
+# Production server
+gunicorn>=23.0; sys_platform != "win32"
+
+# ---------------------------------------------------------------------------
+# Optional extras (uncomment when enabling the feature in .env)
+# ---------------------------------------------------------------------------
+# redis>=5.0                 # CACHE: set REDIS_URL
+# django-storages[s3]>=1.14  # STORAGE_BACKEND=s3
+# pytesseract>=0.3           # OCR_BACKEND=tesseract (requires the tesseract binary)

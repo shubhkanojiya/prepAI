@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Boards · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <h1>Choose your board</h1>
+    <p class="text-muted mb-0">Explore classes, subjects, chapters and topics for every supported education board.</p>
+  </header>
+  {% for group, boards in grouped_boards.items %}
+    {% if boards %}
+    <section class="mb-5" aria-label="{{ group }}">
+      <h2 class="h5 mb-3">{{ group }}</h2>
+      <div class="row g-3">
+        {% for board in boards %}
+        <div class="col-sm-6 col-lg-4">
+          <a href="{{ board.get_absolute_url }}" class="pa-card card-body h-100 d-flex gap-3 align-items-start">
+            <span class="icon-tile">{% if board.logo %}<img src="{{ board.logo.url }}" alt="" width="30" height="30" loading="lazy">{% else %}<i class="bi bi-bank"></i>{% endif %}</span>
+            <span class="min-w-0">
+              <span class="d-flex align-items-center gap-2"><span class="fw-bold">{{ board.short_name }}</span>{% if board.state %}<span class="badge-muted">{{ board.state }}</span>{% endif %}</span>
+              <span class="d-block small text-2">{{ board.name }}</span>
+              <span class="d-block small text-muted mt-1">{{ board.class_count }} class{{ board.class_count|pluralize:"es" }}</span>
+            </span>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% empty %}
+    {% include "components/empty_state.html" with icon="bank" title="No boards available yet" message="Administrators can add boards from the admin panel." %}
+  {% endfor %}
+</div>
+{% endblock %}

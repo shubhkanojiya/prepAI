@@ -1,0 +1,28 @@
+{% load prepai_tags %}
+<article class="pa-card hoverable h-100 d-flex flex-column">
+  <div class="card-body d-flex flex-column">
+    <div class="d-flex align-items-start gap-3 mb-2">
+      <div class="icon-tile sm"><i class="bi {% if paper.is_previous_year %}bi-clock-history{% else %}bi-file-earmark-text{% endif %}"></i></div>
+      <div class="min-w-0 flex-grow-1">
+        <div class="d-flex flex-wrap gap-1 mb-1">
+          <span class="badge-soft">{{ paper.get_paper_type_display }}</span>
+          {% if paper.year %}<span class="badge-muted">{{ paper.year }}</span>{% endif %}
+          {% if paper.is_sample %}<span class="badge-sample" title="Demo content for development">Sample</span>{% endif %}
+        </div>
+        <h3 class="h6 mb-1"><a href="{{ paper.get_absolute_url }}" class="stretched-link-none text-reset">{{ paper.title }}</a></h3>
+      </div>
+    </div>
+    <div class="meta mb-3">
+      <span><i class="bi bi-bank"></i>{{ paper.subject.class_level.board }}</span>
+      <span><i class="bi bi-mortarboard"></i>{{ paper.subject.class_level.name }}</span>
+      <span><i class="bi bi-book"></i>{{ paper.subject.name }}</span>
+      {% if paper.total_marks %}<span><i class="bi bi-award"></i>{{ paper.total_marks }} marks</span>{% endif %}
+    </div>
+    {% if paper.description %}<p class="small text-2 line-clamp-2 mb-3">{{ paper.description }}</p>{% endif %}
+    <div class="d-flex gap-2 mt-auto flex-wrap">
+      <a href="{{ paper.get_absolute_url }}" class="btn btn-primary btn-sm"><i class="bi bi-eye"></i> View</a>
+      {% if paper.pdf %}<a href="{% url 'papers:download' paper.slug %}" class="btn btn-ghost btn-sm" aria-label="Download {{ paper.title }}"><i class="bi bi-download"></i></a>{% endif %}
+      {% bookmark_button paper "btn-sm" False %}
+    </div>
+  </div>
+</article>

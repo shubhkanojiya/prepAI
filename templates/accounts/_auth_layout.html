@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-{% block auth_width %}5{% endblock %}">
+        <div class="text-center mb-4">
+          <img src="{% static 'img/logo.svg' %}" width="52" height="52" alt="">
+          <h1 class="h3 mt-3 mb-1">{% block auth_title %}{% endblock %}</h1>
+          <p class="text-muted mb-0">{% block auth_subtitle %}{% endblock %}</p>
+        </div>
+        <div class="pa-card"><div class="card-body p-4">{% block auth_body %}{% endblock %}</div></div>
+        {% block auth_footer %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

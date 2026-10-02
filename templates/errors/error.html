@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<section class="error-page">
+  <div class="container container-narrow">
+    <div class="icon-tile mx-auto mb-3" style="width:80px;height:80px;font-size:2.2rem;border-radius:22px"><i class="bi bi-{{ icon }}"></i></div>
+    <div class="code">{{ status }}</div>
+    <h1 class="h3 mt-2">{{ title }}</h1>
+    <p class="text-2 mx-auto" style="max-width:520px">{{ message }}</p>
+    <div class="d-flex justify-content-center flex-wrap gap-2 mt-4">
+      <a href="/" class="btn btn-primary"><i class="bi bi-house"></i> Go home</a>
+      <button type="button" class="btn btn-ghost" onclick="history.back()"><i class="bi bi-arrow-left"></i> Go back</button>
+    </div>
+    {% if status == 404 %}
+    <div class="mt-5">
+      <p class="small text-muted">Or search for what you need:</p>
+      {% include "components/search_bar.html" with compact=True %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

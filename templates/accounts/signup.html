@@ -1,0 +1,27 @@
+{% extends "accounts/_auth_layout.html" %}
+{% block title %}Sign up · {{ SITE_NAME }}{% endblock %}
+{% block auth_width %}6{% endblock %}
+{% block auth_title %}Create your free account{% endblock %}
+{% block auth_subtitle %}Track progress, take tests and get AI study help{% endblock %}
+{% block auth_body %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.GET.next }}">
+  <div class="row">
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.first_name %}</div>
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.last_name %}</div>
+  </div>
+  {% include "components/form_field.html" with field=form.email %}
+  <div class="row">
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.board %}</div>
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.class_level %}</div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.password1 %}</div>
+    <div class="col-sm-6">{% include "components/form_field.html" with field=form.password2 %}</div>
+  </div>
+  <button type="submit" class="btn btn-accent w-100 py-2 mt-1">Create account</button>
+  <p class="small text-muted text-center mt-3 mb-0">By signing up you agree to use PrepAI for learning purposes. We never share your personal data.</p>
+</form>
+{% endblock %}
+{% block auth_footer %}<p class="text-center mt-3 text-muted">Already have an account? <a href="{% url 'accounts:login' %}">Login</a></p>{% endblock %}

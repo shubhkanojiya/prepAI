@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}My test attempts · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header"><h1>My test attempts</h1><p class="text-muted mb-0">Every test you've taken, with scores and results.</p></header>
+  <div class="pa-card">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Test</th><th>Status</th><th class="text-end">Score</th><th class="text-end">Accuracy</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+          {% for a in page_obj %}
+          <tr>
+            <td><a href="{{ a.test.get_absolute_url }}" class="text-reset fw-semibold">{{ a.test.title }}</a><div class="small text-muted">{{ a.test.get_test_type_display }}</div></td>
+            <td><span class="{% if a.is_in_progress %}badge-warn{% else %}badge-muted{% endif %}">{{ a.get_status_display }}</span></td>
+            <td class="text-end fw-bold {% if not a.is_in_progress %}tone-{{ a.percentage|score_tone }}{% endif %}">{% if a.is_in_progress %}—{% else %}{{ a.percentage|floatformat:0 }}%{% endif %}</td>
+            <td class="text-end">{% if a.is_in_progress %}—{% else %}{{ a.accuracy|floatformat:0 }}%{% endif %}</td>
+            <td class="small text-muted">{{ a.started_at|date:"j M Y, H:i" }}</td>
+            <td class="text-end"><a href="{{ a.get_absolute_url }}" class="btn btn-soft btn-sm">{% if a.is_in_progress %}Resume{% else %}Result{% endif %}</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6">{% url 'testengine:list' as tests_url %}{% include "components/empty_state.html" with icon="clipboard" title="No attempts yet" message="Take your first test to start tracking progress." action_url=tests_url action_label="Browse tests" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}Exam Question Predictor · {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Paste any question to see how many times it appeared in previous-year board papers, in which years, and a history-based estimate for your upcoming exam.{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <span class="badge-soft mb-2 d-inline-block"><i class="bi bi-graph-up-arrow"></i> History-based estimate</span>
+    <h1>Exam Question Predictor</h1>
+    <p class="text-muted mb-0" style="max-width:780px">Paste or type any question. PrepAI searches the stored previous-year papers, shows <strong>how many times</strong> it appeared and <strong>in which years</strong>, and estimates how likely it (or a close variant) is to appear in your upcoming exam.</p>
+  </header>
+
+  <form method="get" class="pa-card mb-4" aria-label="Predict a question">
+    <div class="card-body">
+      <label for="predict-q" class="form-label">Your question</label>
+      <textarea id="predict-q" name="q" class="form-control mb-3" rows="3" maxlength="2000" required
+                placeholder="e.g. Explain Newton's laws of motion.">{{ q }}</textarea>
+      <div class="row g-2 align-items-end">
+        {% include "components/filter_bar.html" %}
+        <div class="col-12 col-md-auto">
+          <button type="submit" class="btn btn-accent w-100"><i class="bi bi-graph-up-arrow"></i> Predict</button>
+        </div>
+      </div>
+      <p class="small text-muted mt-2 mb-0">Tip: choose your board and class for more accurate results. You can also scan a question with the <a href="{% url 'scanner:scanner' %}">AI Scanner</a> and check its history from the result.</p>
+    </div>
+  </form>
+
+  {% if not report %}
+    <div class="mb-4">
+      <p class="small text-muted mb-2">Try an example:</p>
+      <div class="d-flex flex-wrap gap-2">
+        {% for ex in examples %}<a class="chip" href="?q={{ ex|urlencode }}">{{ ex|truncatechars:60 }}</a>{% endfor %}
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4"><div class="pa-card feature-card"><span class="step-number">1</span><h2 class="h6 mt-3">We find the question</h2><p class="small text-muted mb-0">Exact repeats and differently worded versions are matched in the question bank.</p></div></div>
+      <div class="col-md-4"><div class="pa-card feature-card"><span class="step-number">2</span><h2 class="h6 mt-3">We count its appearances</h2><p class="small text-muted mb-0">How many times it was asked, in which years and which papers — straight from stored papers.</p></div></div>
+      <div class="col-md-4"><div class="pa-card feature-card"><span class="step-number">3</span><h2 class="h6 mt-3">We estimate the chances</h2><p class="small text-muted mb-0">A transparent estimate from frequency, recency, recurrence pattern and related concepts.</p></div></div>
+    </div>
+  {% elif not report.has_matches %}
+    <div class="pa-card mb-4">
+      <div class="card-body text-center py-5">
+        <div class="icon-tile mx-auto mb-3"><i class="bi bi-search"></i></div>
+        <h2 class="h5">No previous appearances found</h2>
+        <p class="text-2 mx-auto mb-3" style="max-width:560px">We couldn't match this question to any question in the stored previous-year papers{% if selected.board %} for the selected board/class{% endif %}. That only means it isn't in our records — it doesn't mean it won't be asked.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+          {% if selected.board %}<a href="?q={{ q|urlencode }}&board=" class="btn btn-ghost">Search all boards</a>{% endif %}
+          <a href="{% url 'assistant:home' %}?q={{ 'Help me prepare this question for my board exam: '|add:q|urlencode }}" class="btn btn-primary"><i class="bi bi-lightbulb"></i> Prepare it with AI</a>
+        </div>
+      </div>
+    </div>
+    {% if report.related %}{% include "questions/_predict_related.html" %}{% endif %}
+  {% else %}
+    {% with lk=report.likelihood pat=report.pattern %}
+    <section class="row g-3 mb-4" aria-label="Prediction summary">
+      <div class="col-md-6 col-xl-3">
+        <div class="pa-card stat-card card-body h-100">
+          <div class="stat-label">Chance in {{ report.upcoming_year }} exam <span class="text-muted">(estimate)</span></div>
+          {% if lk %}
+            <div class="stat-value priority-{% if lk.level == 'High' %}high{% elif lk.level == 'Moderate' %}medium{% else %}low{% endif %}">{{ lk.percent }}%</div>
+            <div class="progress my-2" role="progressbar" aria-label="Estimated likelihood" aria-valuenow="{{ lk.percent }}" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar {% if lk.level == 'High' %}bad{% elif lk.level == 'Moderate' %}warn{% else %}good{% endif %}" style="width: {{ lk.percent }}%"></div>
+            </div>
+            <div class="small fw-semibold">{{ lk.level }} likelihood</div>
+          {% else %}
+            <div class="stat-value">—</div><div class="small text-muted">Not enough stored papers to estimate</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="pa-card stat-card card-body h-100">
+          <div class="stat-label">Times appeared</div>
+          <div class="stat-value">{{ report.times_appeared }}<span class="fs-6 text-muted"> time{{ report.times_appeared|pluralize }}</span></div>
+          <div class="small text-muted">in {{ report.times_appeared }} of {{ report.available_years|length }} year{{ report.available_years|length|pluralize }} of stored papers</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="pa-card stat-card card-body h-100">
+          <div class="stat-label">Years appeared</div>
+          <div class="fw-bold fs-5">{% for y in report.years %}{{ y }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
+          <div class="small text-muted">Last appeared: {{ report.years|last|default:"—" }}</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="pa-card stat-card card-body h-100">
+          <div class="stat-label">Recurrence pattern</div>
+          {% if pat %}
+            <div class="fw-bold">{{ pat.label }}</div>
+            <div class="small text-muted mt-1">Pattern points to <strong>{{ pat.next_expected_year }}</strong>{% if pat.due_in_upcoming_exam %} — your upcoming exam{% endif %}</div>
+          {% else %}
+            <div class="fw-semibold">Not enough appearances</div>
+            <div class="small text-muted mt-1">A pattern needs at least 2 appearances.</div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <div class="disclaimer mb-4" role="note"><i class="bi bi-info-circle-fill"></i><div><strong>Estimate, not a guarantee.</strong> {{ report.disclaimer }} The percentage is calculated only from the papers stored on PrepAI{% if report.contains_sample_data %} — <strong>these results use sample/demo papers</strong>{% endif %}.</div></div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <section class="pa-card mb-4" aria-labelledby="timelineTitle">
+          <div class="pa-card-header"><h2 id="timelineTitle"><i class="bi bi-calendar3 text-muted"></i> Year-by-year history</h2><span class="small text-muted">{{ report.subject.name }} · {{ report.subject.class_level }}</span></div>
+          <div class="card-body">
+            <div class="year-strip mb-3" aria-label="Stored paper years; highlighted years are when the question appeared">
+              {% for y in report.available_years %}
+                <span class="year-cell {% if y in report.years %}hit{% endif %}" title="{% if y in report.years %}Appeared in {{ y }}{% else %}Not asked in {{ y }}{% endif %}">
+                  <span class="year-dot">{% if y in report.years %}<i class="bi bi-check-lg"></i>{% endif %}</span>{{ y }}
+                </span>
+              {% endfor %}
+              <span class="year-cell next" title="Upcoming exam"><span class="year-dot"><i class="bi bi-question-lg"></i></span>{{ report.upcoming_year }}</span>
+            </div>
+            <ul class="list-unstyled mb-0">
+              {% for a in report.appearances %}
+              <li class="d-flex gap-3 py-2 border-top border-soft">
+                <span class="year-pill">{{ a.year }}</span>
+                <div class="min-w-0">
+                  {% for p in a.papers %}<a href="{{ p.get_absolute_url }}" class="d-block text-truncate">{{ p.title }}</a>{% endfor %}
+                  <span class="small text-muted">{% if a.question_numbers %}Question {{ a.question_numbers|join:", " }}{% endif %}{% if a.marks %} · {{ a.marks|floatformat:"-2" }} marks{% endif %}</span>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </section>
+
+        <section class="pa-card mb-4" aria-labelledby="matchTitle">
+          <div class="pa-card-header"><h2 id="matchTitle"><i class="bi bi-intersect text-muted"></i> Matched questions</h2></div>
+          <ul class="list-group list-group-flush">
+            {% for m in report.matches %}
+            <li class="list-group-item bg-transparent">
+              <div class="d-flex justify-content-between gap-3">
+                <a href="{{ m.question.get_absolute_url }}" class="text-reset min-w-0" data-render-math>{{ m.question.text|truncatechars:200 }}</a>
+                <span class="flex-shrink-0 text-end"><span class="{% if m.type == 'Same question' %}badge-good{% else %}badge-soft{% endif %}">{{ m.type }}</span><span class="d-block small text-muted mt-1">{{ m.percent }}% match</span></span>
+              </div>
+              <span class="small text-muted">{{ m.question.subject.name }}{% if m.question.chapter %} · {{ m.question.chapter.name }}{% endif %} · {{ m.appearances }} recorded appearance{{ m.appearances|pluralize }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+
+        {% if report.related %}{% include "questions/_predict_related.html" %}{% endif %}
+      </div>
+
+      <aside class="col-lg-4">
+        {% if lk %}
+        <section class="pa-card mb-3" aria-labelledby="howTitle">
+          <div class="pa-card-header"><h2 id="howTitle"><i class="bi bi-calculator text-muted"></i> How this estimate works</h2></div>
+          <div class="card-body small">
+            <ul class="text-2 ps-3">{% for r in lk.reasons %}<li class="mb-1">{{ r }}</li>{% endfor %}</ul>
+            <details>
+              <summary class="fw-semibold" style="cursor:pointer">See the formula</summary>
+              <p class="text-muted mt-2 mb-1">Estimate = 60% × appearance rate + 25% × recency + 15% × concept rate (+5 points if the recurrence pattern points to the upcoming exam).</p>
+              <p class="text-muted mb-0">It's capped between 3% and 85% because past papers can never make any question certain — or impossible.</p>
+            </details>
+          </div>
+        </section>
+        {% endif %}
+        {% if report.concepts %}
+        <section class="pa-card mb-3" aria-labelledby="conceptTitle">
+          <div class="pa-card-header"><h2 id="conceptTitle">Related concepts</h2></div>
+          <ul class="list-group list-group-flush">
+            {% for c in report.concepts %}<li class="list-group-item bg-transparent d-flex justify-content-between small"><span class="fw-semibold">{{ c.concept.name }}</span><span class="text-muted">{{ c.years|join:", "|default:"—" }}</span></li>{% endfor %}
+          </ul>
+        </section>
+        {% endif %}
+        <section class="pa-card" aria-labelledby="nextTitle">
+          <div class="pa-card-header"><h2 id="nextTitle">Prepare it</h2></div>
+          <div class="card-body d-grid gap-2">
+            <a class="btn btn-primary" href="{% url 'assistant:home' %}?q={{ ai_prompt|urlencode }}"><i class="bi bi-lightbulb"></i> Explain &amp; practise with AI</a>
+            {% with top=report.matches.0.question %}<a class="btn btn-ghost" href="{{ top.get_absolute_url }}"><i class="bi bi-eye"></i> See model answer</a>{% endwith %}
+            <a class="btn btn-ghost" href="{% url 'questions:frequency' %}?board={{ report.subject.class_level.board_id }}&class_level={{ report.subject.class_level_id }}&subject={{ report.subject.id }}"><i class="bi bi-bar-chart-line"></i> Most repeated in {{ report.subject.name }}</a>
+          </div>
+        </section>
+      </aside>
+    </div>
+    {% endwith %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-7">
+        <p class="hero-kicker mb-3"><span class="dot" aria-hidden="true"></span> For CBSE, ICSE &amp; State Board students</p>
+        <h1 class="display-title mb-4">Your AI-Powered <span class="text-accent">Board Exam</span> Partner</h1>
+        <p class="lead text-2 mb-4" style="max-width:600px">
+          Past papers, timed mock tests and notes for your syllabus. Snap a photo of any question for a step-by-step solution, and see how often it has come up in previous exams.
+        </p>
+        <div class="search-shell">{% include "components/search_bar.html" with compact=False %}</div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 small">
+          <span class="text-muted me-1">Popular:</span>
+          <a class="chip" href="{% url 'search:results' %}?q=quadratic+equations">Quadratic equations</a>
+          <a class="chip" href="{% url 'search:results' %}?q=photosynthesis">Photosynthesis</a>
+          <a class="chip" href="{% url 'search:results' %}?q=Newton">Newton's laws</a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block" aria-hidden="true">
+        <div class="pa-card" style="transform: rotate(1.2deg); box-shadow: var(--pa-shadow-lg);">
+          <div class="pa-card-header"><span class="small fw-semibold">Science · Class 9</span><span class="badge-soft">5 marks</span></div>
+          <div class="card-body">
+            <p class="mb-3" style="font-family: var(--pa-font-serif); font-size: 1.25rem; line-height: 1.35;">Q. Explain Newton's three laws of motion with one example each.</p>
+            <div class="small text-muted mb-2">Asked in previous papers</div>
+            <div class="d-flex gap-2 mb-3">
+              <span class="year-pill">2019</span><span class="year-pill">2021</span><span class="year-pill">2023</span><span class="year-pill">2025</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top border-soft">
+              <span class="small"><span class="fw-semibold">Every ~2 years</span> <span class="text-muted">· next due 2027</span></span>
+              <span class="badge-warn">High priority</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row g-3 mt-5 pt-4 hero-stats" aria-label="Platform statistics">
+      <div class="col-6 col-md-3"><div class="stat">{{ stats.boards|intcomma }}</div><div class="small text-muted">Boards</div></div>
+      <div class="col-6 col-md-3"><div class="stat">{{ stats.papers|intcomma }}</div><div class="small text-muted">Question papers</div></div>
+      <div class="col-6 col-md-3"><div class="stat">{{ stats.questions|intcomma }}</div><div class="small text-muted">Practice questions</div></div>
+      <div class="col-6 col-md-3"><div class="stat">{{ stats.tests|intcomma }}</div><div class="small text-muted">Online tests</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick access -->
+<section class="pb-5" aria-labelledby="quick-title">
+  <div class="container">
+    <h2 id="quick-title" class="visually-hidden">Quick access</h2>
+    <div class="row g-3">
+      {% url 'papers:list' as u1 %}{% url 'papers:previous_year' as u2 %}{% url 'testengine:list' as u3 %}{% url 'testengine:mock_list' as u4 %}{% url 'content:list' as u5 %}{% url 'scanner:scanner' as u6 %}      <div class="col-6 col-lg-2"><a href="{{ u1 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-file-earmark-text"></i></span><h3>Question Papers</h3><p class="small text-muted mb-0">Sample, model &amp; practice papers</p></a></div>
+      <div class="col-6 col-lg-2"><a href="{{ u2 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-clock-history"></i></span><h3>Previous Years</h3><p class="small text-muted mb-0">Past board papers with analysis</p></a></div>
+      <div class="col-6 col-lg-2"><a href="{{ u3 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-clipboard-check"></i></span><h3>Test Papers</h3><p class="small text-muted mb-0">Chapter &amp; subject tests</p></a></div>
+      <div class="col-6 col-lg-2"><a href="{{ u4 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-stopwatch"></i></span><h3>Mock Tests</h3><p class="small text-muted mb-0">Full-length, timed exams</p></a></div>
+      <div class="col-6 col-lg-2"><a href="{{ u5 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-journal-text"></i></span><h3>Study Material</h3><p class="small text-muted mb-0">Notes, summaries &amp; formulas</p></a></div>
+      <div class="col-6 col-lg-2"><a href="{{ u6 }}" class="pa-card quick-card card-body"><span class="icon-tile"><i class="bi bi-camera"></i></span><h3>AI Scanner</h3><p class="small text-muted mb-0">Snap a question, get the solution</p></a></div>
+    </div>
+  </div>
+</section>
+
+<!-- Popular boards -->
+<section class="section pt-3" aria-labelledby="boards-title">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4 gap-3">
+      <div><h2 id="boards-title" class="section-title mb-1">Popular boards</h2><p class="text-muted mb-0">Pick your board to explore classes, subjects and chapters.</p></div>
+      <a href="{% url 'boards:board_list' %}" class="btn btn-ghost btn-sm flex-shrink-0">All boards <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3">
+      {% for board in popular_boards %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{{ board.get_absolute_url }}" class="pa-card card-body d-flex align-items-center gap-3 h-100">
+          <span class="icon-tile">{% if board.logo %}<img src="{{ board.logo.url }}" alt="" width="30" height="30" loading="lazy">{% else %}<i class="bi bi-bank"></i>{% endif %}</span>
+          <span class="min-w-0"><span class="fw-bold d-block">{{ board.short_name }}</span><span class="small text-muted d-block text-truncate">{{ board.name }}</span></span>
+        </a>
+      </div>
+      {% empty %}
+      <div class="col-12">{% include "components/empty_state.html" with icon="bank" title="No boards yet" message="Boards will appear here once they are added in the admin panel." %}</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Popular subjects -->
+{% if popular_subjects %}
+<section class="pb-5" aria-labelledby="subjects-title">
+  <div class="container">
+    <h2 id="subjects-title" class="section-title mb-4">Popular subjects</h2>
+    <div class="row g-3">
+      {% for subject in popular_subjects %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="{{ subject.get_absolute_url }}" class="pa-card card-body d-flex align-items-center gap-3 h-100">
+          <span class="icon-tile" style="background: color-mix(in srgb, {{ subject.color }} 14%, transparent); color: {{ subject.color }}"><i class="bi bi-{{ subject.icon }}"></i></span>
+          <span class="min-w-0"><span class="fw-semibold d-block text-truncate">{{ subject.name }}</span><span class="small text-muted">{{ subject.class_level.board }} · {{ subject.class_level.name }}</span></span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Recommended resources -->
+<section class="pb-5" aria-labelledby="rec-title">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 id="rec-title" class="section-title mb-1">{% if user.is_authenticated %}Recommended for you{% else %}Recommended resources{% endif %}</h2>
+        <p class="text-muted mb-0">{% if user.is_authenticated %}Based on your board, class and recent performance.{% else %}Fresh papers and notes from our library.{% endif %}</p>
+      </div>
+    </div>
+    <div class="row g-3">
+      {% if user.is_authenticated %}
+        {% for rec in recommendations %}
+        <div class="col-md-6 col-lg-4">
+          <a href="{{ rec.content_object.get_absolute_url }}" class="pa-card card-body h-100">
+            <span class="badge-soft mb-2 d-inline-block">{{ rec.get_rec_type_display }}</span>
+            <h3 class="h6 mb-1">{{ rec.content_object.title|default:rec.content_object }}</h3>
+            <p class="small text-muted mb-0">{{ rec.reason }}</p>
+          </a>
+        </div>
+        {% empty %}
+        <div class="col-12">{% include "components/empty_state.html" with icon="stars" title="Recommendations are on their way" message="Set your board and class in your profile and take a test — we'll tailor suggestions for you." action_url="/accounts/profile/edit/" action_label="Complete profile" %}</div>
+        {% endfor %}
+      {% else %}
+        {% for paper in latest_papers %}<div class="col-md-6 col-lg-4">{% include "components/paper_card.html" %}</div>{% endfor %}
+        {% for material in latest_materials %}<div class="col-md-6 col-lg-4">{% include "components/material_card.html" %}</div>{% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- AI showcase -->
+<section class="pb-5" aria-labelledby="ai-title">
+  <div class="container">
+    <div class="ai-showcase">
+      <div class="row g-4 align-items-center">
+        <div class="col-lg-5">
+          <p class="eyebrow mb-2">Study tools</p>
+          <h2 id="ai-title" class="section-title mb-3">Stuck on a question? Just scan it.</h2>
+          <p class="opacity-75 mb-4">Point your camera at any printed or handwritten question. PrepAI detects the question, identifies the subject and chapter, and walks you through the answer step by step — then gives you follow-up questions to master the concept.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'scanner:scanner' %}" class="btn btn-light fw-semibold"><i class="bi bi-camera"></i> Try the AI Scanner</a>
+            <a href="{% url 'assistant:home' %}" class="btn btn-outline-light"><i class="bi bi-chat-dots"></i> Ask the AI Assistant</a>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="row g-3">
+            <div class="col-sm-6"><a href="{% url 'scanner:scanner' %}" class="panel-tile h-100"><i class="bi bi-camera fs-4"></i><h3 class="h6 mt-2">Question Scanner</h3><p class="small opacity-75 mb-0">Works with printed and handwritten questions, even from a phone camera.</p></a></div>
+            <div class="col-sm-6"><a href="{% url 'assistant:home' %}" class="panel-tile h-100"><i class="bi bi-chat-square-text fs-4"></i><h3 class="h6 mt-2">Study Assistant</h3><p class="small opacity-75 mb-0">Simple or detailed explanations, quizzes and revision help.</p></a></div>
+            <div class="col-sm-6"><a href="{% url 'questions:predictor' %}" class="panel-tile h-100"><i class="bi bi-graph-up-arrow fs-4"></i><h3 class="h6 mt-2">Question Predictor</h3><p class="small opacity-75 mb-0">Paste a question to see how many times and in which years it appeared, plus its chances in your upcoming exam.</p></a></div>
+            <div class="col-sm-6"><a href="{% url 'dashboard:home' %}" class="panel-tile h-100"><i class="bi bi-bullseye fs-4"></i><h3 class="h6 mt-2">Personal Recommendations</h3><p class="small opacity-75 mb-0">Targeted notes and tests for the chapters you find hardest.</p></a></div>
+          </div>
+        </div>
+      </div>
+      {% if not ai_enabled %}<p class="small opacity-75 mt-4 mb-0"><i class="bi bi-info-circle"></i> AI features need an AI provider to be configured by the site administrator.</p>{% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section pt-3" aria-labelledby="how-title">
+  <div class="container">
+    <div class="text-center mb-5"><h2 id="how-title" class="section-title">How PrepAI works</h2><p class="text-muted">Four steps from confused to confident.</p></div>
+    <div class="row g-4">
+      <div class="col-sm-6 col-lg-3"><div class="pa-card feature-card"><span class="step-number">1</span><h3 class="h6 mt-3">Choose your board &amp; class</h3><p class="small text-muted mb-0">CBSE, ICSE or your state board — we show only what matters to you.</p></div></div>
+      <div class="col-sm-6 col-lg-3"><div class="pa-card feature-card"><span class="step-number">2</span><h3 class="h6 mt-3">Learn &amp; practise</h3><p class="small text-muted mb-0">Study notes, solve papers and previous-year questions chapter by chapter.</p></div></div>
+      <div class="col-sm-6 col-lg-3"><div class="pa-card feature-card"><span class="step-number">3</span><h3 class="h6 mt-3">Test yourself</h3><p class="small text-muted mb-0">Timed tests with instant scoring and question-wise explanations.</p></div></div>
+      <div class="col-sm-6 col-lg-3"><div class="pa-card feature-card"><span class="step-number">4</span><h3 class="h6 mt-3">Improve with AI</h3><p class="small text-muted mb-0">Analytics find weak areas; AI explains, quizzes and recommends.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="pb-5" aria-labelledby="faq-title">
+  <div class="container container-narrow">
+    <h2 id="faq-title" class="section-title text-center mb-4">Frequently asked questions</h2>
+    <div class="accordion" id="faq">
+      {% for question, answer in faqs %}
+      <div class="accordion-item">
+        <h3 class="accordion-header">
+          <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ forloop.counter }}" aria-expanded="{{ forloop.first|yesno:'true,false' }}" aria-controls="faq{{ forloop.counter }}">{{ question }}</button>
+        </h3>
+        <div id="faq{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#faq">
+          <div class="accordion-body text-2">{{ answer }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if not user.is_authenticated %}
+    <div class="text-center mt-5">
+      <a href="{% url 'accounts:signup' %}" class="btn btn-accent btn-lg px-4">Start preparing — it's free</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}{{ heading }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <h1>{{ heading }}</h1>
+    <p class="text-muted mb-0">{{ subheading }}</p>
+  </header>
+
+  <form method="get" class="filter-bar mb-4" data-auto-submit aria-label="Filter papers">
+    <div class="row g-2 align-items-end">
+      {% include "components/filter_bar.html" %}
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="f-year">Year</label>
+        <select class="form-select form-select-sm" name="year" id="f-year">
+          <option value="">All years</option>
+          {% for y in years %}<option value="{{ y }}" {% if request.GET.year == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="row g-2 mt-1 align-items-end">
+      {% if section == "papers" %}
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1" for="f-ptype">Paper type</label>
+        <select class="form-select form-select-sm" name="paper_type" id="f-ptype">
+          <option value="">All types</option>
+          {% for v, l in paper_types %}<option value="{{ v }}" {% if request.GET.paper_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+      {% else %}
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1" for="f-etype">Exam type</label>
+        <select class="form-select form-select-sm" name="exam_type" id="f-etype">
+          <option value="">All exams</option>
+          {% for v, l in exam_types %}<option value="{{ v }}" {% if request.GET.exam_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1" for="f-diff">Difficulty</label>
+        <select class="form-select form-select-sm" name="difficulty" id="f-diff">
+          <option value="">Any</option>
+          {% for v, l in difficulties %}<option value="{{ v }}" {% if request.GET.difficulty == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1" for="f-sort">Sort by</label>
+        <select class="form-select form-select-sm" name="sort" id="f-sort">
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+          <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
+          <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Most downloaded</option>
+          <option value="title" {% if sort == 'title' %}selected{% endif %}>Title</option>
+        </select>
+      </div>
+      <div class="col-md">
+        <label class="form-label small mb-1" for="f-q">Search</label>
+        <div class="input-group input-group-sm">
+          <input type="search" class="form-control" id="f-q" name="q" value="{{ q }}" placeholder="Paper title…">
+          <button class="btn btn-primary" type="submit" aria-label="Search papers"><i class="bi bi-search"></i></button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="small text-muted mb-0">{{ page_obj.paginator.count }} paper{{ page_obj.paginator.count|pluralize }} found</p>
+    {% if request.GET %}<a href="{{ request.path }}" class="small">Clear filters</a>{% endif %}
+  </div>
+  <div class="row g-3">
+    {% for paper in page_obj %}
+      <div class="col-md-6 col-lg-4">{% include "components/paper_card.html" %}</div>
+    {% empty %}
+      <div class="col-12">{% include "components/empty_state.html" with icon="file-earmark-x" title="No papers match your filters" message="Try a different board, class or year." %}</div>
+    {% endfor %}
+  </div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

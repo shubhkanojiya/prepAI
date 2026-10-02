@@ -1,0 +1,74 @@
+{# Historical frequency analysis for one question. Expects `analysis`. #}
+<section class="pa-card" aria-labelledby="freq-title">
+  <div class="pa-card-header">
+    <h2 id="freq-title"><i class="bi bi-bar-chart-line text-muted"></i> Historical Frequency Analysis</h2>
+    {% if analysis.contains_sample_data %}<span class="badge-sample" title="Computed from sample/demo papers">Sample data</span>{% endif %}
+  </div>
+  <div class="card-body">
+    {% if analysis.has_data %}
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="small text-muted">Previous appearances</div><div class="fs-4 fw-bold">{{ analysis.frequency }}</div><div class="small text-muted">year{{ analysis.frequency|pluralize }}</div></div>
+        <div class="col-6 col-md-3"><div class="small text-muted">Last appeared</div><div class="fs-4 fw-bold">{{ analysis.last_year|default:"—" }}</div></div>
+        <div class="col-6 col-md-3"><div class="small text-muted">Historical pattern</div><div class="fw-semibold">{{ analysis.pattern }}</div></div>
+        <div class="col-6 col-md-3">
+          <div class="small text-muted">Preparation priority</div>
+          <div class="fs-5 fw-bold priority-{{ analysis.priority.level|lower }}">{{ analysis.priority.level }}</div>
+        </div>
+      </div>
+
+      {% if prediction.likelihood %}
+      <div class="bg-surface-2 rounded-xl p-3 mb-3 d-flex flex-wrap align-items-center gap-3">
+        <div>
+          <div class="small text-muted">Chance in {{ prediction.upcoming_year }} exam (estimate)</div>
+          <div class="fs-4 fw-bold priority-{% if prediction.likelihood.level == 'High' %}high{% elif prediction.likelihood.level == 'Moderate' %}medium{% else %}low{% endif %}">{{ prediction.likelihood.percent }}% <span class="fs-6">{{ prediction.likelihood.level }}</span></div>
+        </div>
+        {% if prediction.pattern %}
+        <div class="small"><div class="text-muted">Recurrence pattern</div><div class="fw-semibold">{{ prediction.pattern.label }} → next around {{ prediction.pattern.next_expected_year }}</div></div>
+        {% endif %}
+        <a href="{% url 'questions:predictor' %}?q={{ question.text|truncatechars:900|urlencode }}&subject={{ question.subject_id }}&class_level={{ question.subject.class_level_id }}&board={{ question.subject.class_level.board_id }}" class="btn btn-soft btn-sm ms-md-auto"><i class="bi bi-graph-up-arrow"></i> Full prediction</a>
+      </div>
+      {% endif %}
+
+      {% if analysis.years %}
+      <h3 class="h6">Previous appearance</h3>
+      <div class="d-flex flex-wrap gap-2 mb-3" aria-label="Years in which this question appeared">
+        {% for a in analysis.appearances %}
+          <a href="{{ a.paper.get_absolute_url }}" class="year-pill" title="{{ a.paper.title }}{% if a.question_number %} · Q{{ a.question_number }}{% endif %}{% if a.marks %} · {{ a.marks|floatformat:'-2' }} marks{% endif %}">{{ a.year }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if analysis.priority.reasons %}
+      <h3 class="h6">Why this priority?</h3>
+      <ul class="small text-2 mb-3">{% for r in analysis.priority.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+      {% endif %}
+
+      {% if analysis.related_concepts %}
+      <h3 class="h6">Repeated concepts</h3>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>Concept</th><th>Years appeared</th><th class="text-end">Count</th></tr></thead>
+          <tbody>
+            {% for row in analysis.related_concepts %}
+            <tr><td class="fw-semibold">{{ row.concept.name }}</td><td class="small text-muted">{{ row.years|join:", "|default:"—" }}</td><td class="text-end">{{ row.count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    {% else %}
+      <p class="text-muted mb-3">No previous appearances of this question or its concepts are recorded in the stored papers yet.</p>
+    {% endif %}
+
+    {% if analysis.similar_questions %}
+      <h3 class="h6">Similar questions</h3>
+      <ul class="list-unstyled mb-3">
+        {% for q in analysis.similar_questions %}
+        <li class="mb-2"><a href="{{ q.get_absolute_url }}" class="small">{{ q.text|truncatechars:140 }}</a>{% if q.appearance_years %} <span class="badge-muted">{{ q.appearance_years }} yr{{ q.appearance_years|pluralize }}</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="disclaimer" role="note"><i class="bi bi-info-circle-fill"></i><div><strong>Disclaimer:</strong> {{ analysis.disclaimer }} Figures are computed only from papers stored on PrepAI.</div></div>
+  </div>
+</section>

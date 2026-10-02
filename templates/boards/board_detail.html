@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ board.name }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" %}
+    <div class="d-flex align-items-center gap-3">
+      <span class="icon-tile">{% if board.logo %}<img src="{{ board.logo.url }}" alt="" width="30" height="30">{% else %}<i class="bi bi-bank"></i>{% endif %}</span>
+      <div>
+        <h1 class="mb-0">{{ board.name }}</h1>
+        <p class="text-muted mb-0">{{ board.get_board_type_display }}{% if board.state %} · {{ board.state }}{% endif %}</p>
+      </div>
+    </div>
+    {% if board.description %}<p class="text-2 mt-3 mb-0" style="max-width:760px">{{ board.description }}</p>{% endif %}
+  </header>
+  <h2 class="h5 mb-3">Select your class</h2>
+  <div class="row g-3">
+    {% for class_level in classes %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <a href="{{ class_level.get_absolute_url }}" class="pa-card card-body text-center h-100">
+        <div class="display-6 fw-semibold text-primary" style="font-family:var(--pa-font-serif)">{{ class_level.number }}</div>
+        <div class="fw-semibold">{{ class_level.name }}</div>
+        <div class="small text-muted">{{ class_level.subject_count }} subject{{ class_level.subject_count|pluralize }}</div>
+      </a>
+    </div>
+    {% empty %}
+    <div class="col-12">{% include "components/empty_state.html" with icon="mortarboard" title="No classes yet" message="Classes for this board are coming soon." %}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

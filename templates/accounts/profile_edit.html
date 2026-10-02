@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Edit profile · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container container-narrow py-4">
+  <div class="page-header pb-2"><h1>Edit profile</h1><p class="text-muted mb-0">Your board and class personalise papers, tests and recommendations.</p></div>
+  {% include "accounts/_account_nav.html" with active="edit" %}
+  <form method="post" enctype="multipart/form-data" class="pa-card" novalidate>
+    <div class="card-body p-4">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-sm-6">{% include "components/form_field.html" with field=user_form.first_name %}</div>
+        <div class="col-sm-6">{% include "components/form_field.html" with field=user_form.last_name %}</div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.board %}</div>
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.class_level %}</div>
+      </div>
+      {% include "components/form_field.html" with field=profile_form.subjects %}
+      <div class="row">
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.school %}</div>
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.phone %}</div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.avatar %}</div>
+        <div class="col-sm-6">{% include "components/form_field.html" with field=profile_form.exam_date %}</div>
+      </div>
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'accounts:profile' %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

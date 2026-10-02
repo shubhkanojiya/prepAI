@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Question Bank · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <h1>Question Bank</h1>
+    <p class="text-muted mb-0">Practice questions with answers, explanations and previous-year appearance history.</p>
+  </header>
+  <form method="get" class="filter-bar mb-4" data-auto-submit aria-label="Filter questions">
+    <div class="row g-2 align-items-end">
+      {% include "components/filter_bar.html" %}
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="f-diff">Difficulty</label>
+        <select class="form-select form-select-sm" name="difficulty" id="f-diff">
+          <option value="">Any</option>
+          {% for v, l in difficulties %}<option value="{{ v }}" {% if request.GET.difficulty == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="f-type">Type</label>
+        <select class="form-select form-select-sm" name="type" id="f-type">
+          <option value="">Any</option>
+          {% for v, l in types %}<option value="{{ v }}" {% if request.GET.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="row g-2 mt-1 align-items-center">
+      <div class="col-md-6"><input type="search" class="form-control form-control-sm" name="q" value="{{ q }}" placeholder="Search question text…" aria-label="Search question text"></div>
+      <div class="col-auto form-check ms-2"><input class="form-check-input" type="checkbox" name="asked" value="1" id="f-asked" {% if request.GET.asked == '1' %}checked{% endif %} onchange="this.form.submit()"><label class="form-check-label small" for="f-asked">Asked in previous years</label></div>
+      <div class="col-auto form-check ms-2"><input class="form-check-input" type="checkbox" name="important" value="1" id="f-imp" {% if request.GET.important == '1' %}checked{% endif %} onchange="this.form.submit()"><label class="form-check-label small" for="f-imp">Important only</label></div>
+      <div class="col-auto ms-auto"><button class="btn btn-primary btn-sm" type="submit">Apply</button> <a href="{% url 'questions:list' %}" class="btn btn-ghost btn-sm">Reset</a></div>
+    </div>
+  </form>
+  <div class="d-grid gap-2">
+    {% for question in page_obj %}{% include "components/question_card.html" with show_subject=True %}
+    {% empty %}{% include "components/empty_state.html" with icon="search" title="No questions match your filters" message="Try removing some filters." %}{% endfor %}
+  </div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

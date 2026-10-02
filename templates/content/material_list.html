@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}Study Material · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <h1>Study Material</h1>
+    <p class="text-muted mb-0">Notes, chapter summaries, revision notes, formula sheets, important questions and concept explanations.</p>
+  </header>
+
+  <nav class="pa-tabs mb-3" aria-label="Material type">
+    <a href="{% url_replace type='' page='' %}" class="chip {% if not selected_type %}active{% endif %}">All</a>
+    {% for value, label in material_types %}
+      <a href="{% url_replace type=value page='' %}" class="chip {% if selected_type == value %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  <form method="get" class="filter-bar mb-4" data-auto-submit aria-label="Filter study material">
+    {% if selected_type %}<input type="hidden" name="type" value="{{ selected_type }}">{% endif %}
+    <div class="row g-2 align-items-end">
+      {% include "components/filter_bar.html" %}
+      {% if topics %}
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="f-topic">Topic</label>
+        <select class="form-select form-select-sm" name="topic" id="f-topic">
+          <option value="">All topics</option>
+          {% for t in topics %}<option value="{{ t.id }}" {% if selected_topic == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-md">
+        <label class="form-label small mb-1" for="f-q">Search</label>
+        <div class="input-group input-group-sm">
+          <input type="search" id="f-q" class="form-control" name="q" value="{{ q }}" placeholder="Title or summary…">
+          <button class="btn btn-primary" type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="row g-3">
+    {% for material in page_obj %}
+      <div class="col-md-6 col-lg-4">{% include "components/material_card.html" %}</div>
+    {% empty %}
+      <div class="col-12">{% include "components/empty_state.html" with icon="journal-x" title="No study material found" message="Try a different filter." %}</div>
+    {% endfor %}
+  </div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

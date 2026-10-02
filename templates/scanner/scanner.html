@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}AI Question Scanner · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header text-center">
+    <span class="badge-soft mb-2 d-inline-block"><i class="bi bi-lightbulb"></i> AI-powered</span>
+    <h1>AI Question Scanner</h1>
+    <p class="text-muted mx-auto mb-0" style="max-width:640px">Snap or upload a printed or handwritten question. PrepAI detects it, identifies the subject and chapter, and explains the answer step by step.</p>
+  </header>
+
+  {% if not ai_enabled %}
+  <div class="alert alert-warning d-flex gap-2" role="status"><i class="bi bi-exclamation-triangle"></i><div>AI is not configured on this server yet, so scans can't be processed. Administrators: set <code>AI_PROVIDER</code> and <code>AI_API_KEY</code> in <code>.env</code>.</div></div>
+  {% endif %}
+
+  <div class="scan-steps justify-content-center mb-4" aria-label="Scan progress">
+    <span class="scan-step active" data-step="capture"><i class="bi bi-camera"></i> Upload / capture</span>
+    <span class="scan-step" data-step="processing"><i class="bi bi-cpu"></i> Processing</span>
+    <span class="scan-step" data-step="question"><i class="bi bi-search"></i> Detected question</span>
+    <span class="scan-step" data-step="answer"><i class="bi bi-check2-circle"></i> Answer &amp; explanation</span>
+    <span class="scan-step" data-step="followup"><i class="bi bi-arrow-repeat"></i> Follow-up</span>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-5">
+      <section class="pa-card" aria-labelledby="inputTitle">
+        <div class="card-body">
+          <h2 id="inputTitle" class="visually-hidden">Question input</h2>
+          <ul class="nav nav-underline mb-3" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-image" type="button" role="tab" aria-controls="tab-image" aria-selected="true"><i class="bi bi-image"></i> Image</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-text" type="button" role="tab" aria-controls="tab-text" aria-selected="false"><i class="bi bi-keyboard"></i> Type it</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-image" role="tabpanel">
+              <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload a question image. Drop a file, paste, or press Enter to browse.">
+                <div class="icon-tile mb-3"><i class="bi bi-cloud-arrow-up"></i></div>
+                <p class="fw-semibold mb-1">Drop an image, paste, or click to upload</p>
+                <p class="small text-muted mb-0">JPG, PNG or WEBP · up to {{ MAX_IMAGE_UPLOAD_MB }} MB</p>
+              </div>
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif" class="d-none">
+              <input type="file" id="cameraInput" accept="image/*" capture="environment" class="d-none">
+              <div class="d-grid gap-2 mt-3">
+                <button type="button" class="btn btn-soft" id="openCamera"><i class="bi bi-camera"></i> Use camera</button>
+              </div>
+              <div id="cameraBox" class="mt-3" hidden>
+                <video id="cameraVideo" class="camera-view" autoplay playsinline muted aria-label="Camera preview"></video>
+                <div class="d-flex gap-2 mt-2">
+                  <button type="button" class="btn btn-primary flex-grow-1" id="captureBtn"><i class="bi bi-circle-fill"></i> Capture</button>
+                  <button type="button" class="btn btn-ghost" id="closeCamera">Cancel</button>
+                </div>
+              </div>
+              <div id="previewBox" class="mt-3" hidden>
+                <img id="previewImg" class="scan-preview" alt="Selected question image">
+                <div class="d-flex gap-2 mt-2">
+                  <button type="button" class="btn btn-ghost btn-sm" id="clearImage"><i class="bi bi-x"></i> Remove</button>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="tab-text" role="tabpanel">
+              <label for="typedQuestion" class="form-label">Type or paste your question</label>
+              <textarea id="typedQuestion" class="form-control" rows="6" maxlength="4000" placeholder="e.g. Solve: 2x² − 7x + 3 = 0"></textarea>
+            </div>
+          </div>
+          <button type="button" class="btn btn-accent w-100 mt-3" id="scanBtn" {% if not ai_enabled %}disabled{% endif %}><i class="bi bi-lightbulb"></i> Solve with AI</button>
+          <p class="small text-muted mt-2 mb-0 text-center">{% if user.is_authenticated %}Your scans are saved to <a href="{% url 'scanner:history' %}">scan history</a>.{% else %}<a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Login</a> to save your scan history.{% endif %}</p>
+        </div>
+      </section>
+
+      {% if recent_scans %}
+      <section class="pa-card mt-3" aria-labelledby="recentTitle">
+        <div class="pa-card-header"><h2 id="recentTitle">Recent scans</h2><a href="{% url 'scanner:history' %}" class="small">View all</a></div>
+        <ul class="list-group list-group-flush">
+          {% for scan in recent_scans %}
+          <li class="list-group-item bg-transparent"><a href="{{ scan.get_absolute_url }}" class="text-reset d-flex gap-2 align-items-center"><i class="bi {% if scan.status == 'completed' %}bi-check-circle tone-good{% else %}bi-exclamation-circle tone-bad{% endif %}"></i><span class="text-truncate small">{{ scan }}</span></a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-7">
+      <section id="resultPane" aria-live="polite" aria-labelledby="resultTitle">
+        <h2 id="resultTitle" class="visually-hidden">Scan result</h2>
+        <div class="pa-card"><div class="card-body">
+          {% include "components/empty_state.html" with icon="stars" title="Your solution will appear here" message="Upload a clear, well-lit photo with the whole question visible for the best results." %}
+        </div></div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>window.PREPAI_SCANNER = { endpoint: "{% url 'api:scanner-list' %}", autoCamera: {{ request.GET.camera|yesno:"true,false" }}, maxBytes: {{ MAX_IMAGE_UPLOAD_MB }} * 1024 * 1024 };</script>
+<script src="{% static 'js/scanner.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,11 @@
+<section class="pa-card mb-4" aria-labelledby="relatedTitle">
+  <div class="pa-card-header"><h2 id="relatedTitle"><i class="bi bi-diagram-3 text-muted"></i> Related questions</h2><span class="small text-muted">Not counted in the history above</span></div>
+  <ul class="list-group list-group-flush">
+    {% for r in report.related %}
+    <li class="list-group-item bg-transparent d-flex justify-content-between gap-3">
+      <a href="{{ r.question.get_absolute_url }}" class="text-reset small min-w-0">{{ r.question.text|truncatechars:160 }}</a>
+      <span class="small text-muted flex-shrink-0">{{ r.percent }}% · {{ r.appearances }} appearance{{ r.appearances|pluralize }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>

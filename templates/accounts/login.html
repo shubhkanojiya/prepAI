@@ -1,0 +1,22 @@
+{% extends "accounts/_auth_layout.html" %}
+{% block title %}Login · {{ SITE_NAME }}{% endblock %}
+{% block auth_title %}Welcome back{% endblock %}
+{% block auth_subtitle %}Sign in to continue your preparation{% endblock %}
+{% block auth_body %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger small" role="alert">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+  {% endif %}
+  {% include "components/form_field.html" with field=form.username %}
+  {% include "components/form_field.html" with field=form.password %}
+  <div class="d-flex justify-content-end mb-3"><a href="{% url 'accounts:password_reset' %}" class="small">Forgot password?</a></div>
+  <button type="submit" class="btn btn-primary w-100 py-2">Login</button>
+  {% if google_auth_enabled %}
+    <div class="text-center small text-muted my-3">or</div>
+    <a href="/accounts/google/login/" class="btn btn-ghost w-100"><i class="bi bi-google"></i> Continue with Google</a>
+  {% endif %}
+</form>
+{% endblock %}
+{% block auth_footer %}<p class="text-center mt-3 text-muted">New to PrepAI? <a href="{% url 'accounts:signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Create a free account</a></p>{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Scanned question · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <nav aria-label="Breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'scanner:history' %}">Scan history</a></li><li class="breadcrumb-item active" aria-current="page">{{ scan.created_at|date:"j M Y, H:i" }}</li></ol></nav>
+    <h1 class="h3">Scanned question</h1>
+  </header>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      {% if scan.image %}<img src="{{ scan.image.url }}" alt="Scanned question image" class="scan-preview mb-3">{% endif %}
+      {% if scan.typed_question %}<div class="pa-card card-body mb-3"><h2 class="h6">Typed question</h2><p class="mb-0 small">{{ scan.typed_question }}</p></div>{% endif %}
+      <div class="pa-card card-body small">
+        <dl class="mb-0">
+          <dt class="text-muted">Status</dt><dd>{{ scan.get_status_display }}</dd>
+          {% if scan.subject %}<dt class="text-muted">Matched subject</dt><dd><a href="{{ scan.subject.get_absolute_url }}">{{ scan.subject }}</a></dd>{% endif %}
+          {% if scan.chapter %}<dt class="text-muted">Matched chapter</dt><dd><a href="{{ scan.chapter.get_absolute_url }}">{{ scan.chapter.name }}</a></dd>{% endif %}
+          <dt class="text-muted">Processing time</dt><dd class="mb-0">{{ scan.processing_ms }} ms</dd>
+        </dl>
+      </div>
+      <form method="post" action="{% url 'scanner:delete' scan.pk %}" class="mt-3" data-confirm="This scan and its image will be permanently deleted." data-confirm-danger="true" data-confirm-button="Delete">
+        {% csrf_token %}<button class="btn btn-ghost btn-sm text-danger"><i class="bi bi-trash"></i> Delete scan</button>
+      </form>
+    </div>
+    <div class="col-lg-8">
+      {% if scan.status == "completed" %}
+        <article class="pa-card mb-3"><div class="card-body">
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            {% if scan.detected_subject_name %}<span class="badge-soft">{{ scan.detected_subject_name }}</span>{% endif %}
+            {% if scan.detected_topic_name %}<span class="badge-muted">{{ scan.detected_topic_name }}</span>{% endif %}
+            {% if scan.is_handwritten %}<span class="badge-muted">Handwritten</span>{% endif %}
+          </div>
+          <h2 class="h6 text-muted text-uppercase small fw-bold">Detected question</h2>
+          <div class="question-text" data-render-math>{{ scan.detected_question }}</div>
+          <a href="{% url 'questions:predictor' %}?q={{ scan.detected_question|truncatechars:900|urlencode }}{% if scan.subject_id %}&subject={{ scan.subject_id }}&class_level={{ scan.subject.class_level_id }}&board={{ scan.subject.class_level.board_id }}{% endif %}" class="btn btn-soft btn-sm mt-3"><i class="bi bi-graph-up-arrow"></i> Check exam history &amp; chances</a>
+        </div></article>
+        <article class="pa-card mb-3"><div class="card-body"><h2 class="h6 text-muted text-uppercase small fw-bold">Answer</h2><div class="prose fw-semibold" data-render-markdown>{{ scan.answer }}</div></div></article>
+        {% if scan.steps %}<article class="pa-card mb-3"><div class="card-body"><h2 class="h6 text-muted text-uppercase small fw-bold mb-3">Step-by-step explanation</h2>
+          <ol class="step-list mb-0">{% for step in scan.steps %}<li><div class="prose" data-render-markdown>{{ step }}</div></li>{% endfor %}</ol></div></article>{% endif %}
+        {% if scan.concept %}<article class="pa-card mb-3"><div class="card-body"><h2 class="h6 text-muted text-uppercase small fw-bold"><i class="bi bi-lightbulb"></i> Concept</h2><div class="prose" data-render-markdown>{{ scan.concept }}</div></div></article>{% endif %}
+        {% if scan.follow_up_questions %}<article class="pa-card mb-3"><div class="card-body"><h2 class="h6 text-muted text-uppercase small fw-bold">Follow-up questions</h2>
+          <ul class="list-unstyled mb-0">{% for q in scan.follow_up_questions %}<li class="d-flex gap-2 mb-2"><span class="flex-grow-1" data-render-math>{{ q }}</span><a class="btn btn-soft btn-sm" href="{% url 'assistant:home' %}?q={{ q|urlencode }}">Solve</a></li>{% endfor %}</ul></div></article>{% endif %}
+      {% else %}
+        <div class="pa-card card-body text-center py-5">
+          <i class="bi bi-exclamation-triangle fs-1 tone-bad"></i>
+          <p class="mt-2">{{ scan.error_message|default:"This scan could not be completed." }}</p>
+          <a href="{% url 'scanner:scanner' %}" class="btn btn-primary"><i class="bi bi-arrow-clockwise"></i> Scan again</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

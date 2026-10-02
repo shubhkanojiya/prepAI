@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load prepai_tags %}
+{% block title %}{{ test.title }} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container container-narrow py-4">
+  <header class="page-header">
+    {% if test.subject %}{% include "components/breadcrumbs.html" with board=test.subject.class_level.board class_level=test.subject.class_level subject=test.subject chapter=test.chapter %}{% endif %}
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <span class="badge-soft">{{ test.get_test_type_display }}</span>
+      <span class="badge-muted">{{ test.get_difficulty_display }}</span>
+      {% if test.is_sample %}<span class="badge-sample">Sample</span>{% endif %}
+    </div>
+    <h1>{{ test.title }}</h1>
+    {% if test.description %}<p class="text-2 mb-0">{{ test.description }}</p>{% endif %}
+  </header>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ test.question_count }}</div><div class="stat-label">Questions</div></div></div>
+    <div class="col-6 col-md-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ test.duration_minutes }}</div><div class="stat-label">Minutes</div></div></div>
+    <div class="col-6 col-md-3"><div class="pa-card stat-card card-body"><div class="stat-value">{{ test.pass_percentage }}%</div><div class="stat-label">To pass</div></div></div>
+    <div class="col-6 col-md-3"><div class="pa-card stat-card card-body"><div class="stat-value">{% if test.max_attempts %}{{ test.max_attempts }}{% else %}∞{% endif %}</div><div class="stat-label">Attempts allowed</div></div></div>
+  </div>
+
+  <section class="pa-card mb-4" aria-labelledby="instr">
+    <div class="pa-card-header"><h2 id="instr"><i class="bi bi-info-circle text-muted"></i> Instructions</h2></div>
+    <div class="card-body prose">
+      {% if test.instructions %}{{ test.instructions|markdown }}{% else %}
+      <ul>
+        <li>The timer starts as soon as you begin and cannot be paused.</li>
+        <li>Your answers are saved automatically as you go — you can safely refresh the page.</li>
+        <li>Use <strong>Mark for review</strong> to flag questions you want to revisit.</li>
+        <li>The test is submitted automatically when time runs out.</li>
+        <li>Some questions may carry negative marks for wrong answers — they are shown on each question.</li>
+      </ul>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if user.is_authenticated %}
+    {% if active_attempt %}
+      <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="status">
+        <i class="bi bi-hourglass-split"></i> You have an attempt in progress with {{ active_attempt.remaining_seconds|duration }} left.
+        <a href="{% url 'testengine:attempt' active_attempt.pk %}" class="btn btn-warning btn-sm ms-auto">Resume test</a>
+      </div>
+    {% elif attempts_left == 0 %}
+      <div class="alert alert-secondary" role="status">You've used all attempts for this test.</div>
+    {% elif test.question_count %}
+      <form method="post" action="{% url 'testengine:start' test.slug %}" data-confirm="The {{ test.duration_minutes }}-minute timer starts immediately and can't be paused." data-confirm-title="Start the test?" data-confirm-button="Start now">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-accent btn-lg w-100"><i class="bi bi-play-fill"></i> Start test</button>
+      </form>
+    {% else %}
+      <div class="alert alert-secondary" role="status">This test doesn't have any questions yet.</div>
+    {% endif %}
+
+    {% if past_attempts %}
+    <section class="pa-card mt-4" aria-labelledby="past">
+      <div class="pa-card-header"><h2 id="past">Your previous attempts</h2></div>
+      <ul class="list-group list-group-flush">
+        {% for a in past_attempts %}
+        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+          <span><span class="fw-semibold tone-{{ a.percentage|score_tone }}">{{ a.percentage|floatformat:0 }}%</span> <span class="small text-muted">· {{ a.submitted_at|date:"j M Y, H:i" }}</span></span>
+          <a href="{% url 'testengine:result' a.pk %}" class="btn btn-ghost btn-sm">View result</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  {% else %}
+    <div class="pa-card card-body text-center">
+      <p class="mb-3">Sign in to take this test and track your results.</p>
+      <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">Login to start</a>
+      <a href="{% url 'accounts:signup' %}?next={{ request.path|urlencode }}" class="btn btn-ghost">Create account</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

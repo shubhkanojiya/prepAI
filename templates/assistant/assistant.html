@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}AI Study Assistant · {{ SITE_NAME }}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="container-xl py-3">
+  <div class="chat-layout">
+    <aside class="chat-sidebar pa-card p-2" aria-label="Conversations">
+      <a href="{% url 'assistant:home' %}" class="btn btn-primary w-100 mb-2"><i class="bi bi-plus-lg"></i> New conversation</a>
+      <nav id="convList">
+        {% for c in conversations %}
+          <a href="{% url 'assistant:conversation' c.pk %}" class="conv-link {% if conversation and c.pk == conversation.pk %}active{% endif %}" data-conv-id="{{ c.pk }}"><i class="bi bi-chat-left-text"></i><span class="text-truncate">{{ c.title }}</span></a>
+        {% empty %}
+          <p class="small text-muted px-2 mt-2" id="noConvs">No conversations yet.</p>
+        {% endfor %}
+      </nav>
+    </aside>
+
+    <section class="chat-main pa-card" aria-label="Chat">
+      <div class="pa-card-header flex-wrap">
+        <div class="d-flex align-items-center gap-2 min-w-0">
+          <a href="{% url 'assistant:home' %}" class="btn btn-ghost btn-sm d-lg-none" aria-label="New conversation"><i class="bi bi-plus-lg"></i></a>
+          <h1 class="h6 mb-0 text-truncate" id="convTitle">{% if conversation %}{{ conversation.title }}{% else %}AI Study Assistant{% endif %}</h1>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <label for="modeSelect" class="visually-hidden">Assistant mode</label>
+          <select id="modeSelect" class="form-select form-select-sm" style="width:auto">
+            {% for value, label in modes %}<option value="{{ value }}" {% if conversation and conversation.mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <label for="subjectSelect" class="visually-hidden">Subject</label>
+          <select id="subjectSelect" class="form-select form-select-sm" style="width:auto;max-width:180px" {% if conversation %}disabled{% endif %}>
+            <option value="">Any subject</option>
+            {% for s in subjects %}<option value="{{ s.id }}" {% if conversation and conversation.subject_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+          </select>
+          {% if conversation %}
+          <form method="post" action="{% url 'assistant:delete' conversation.pk %}" data-confirm="This conversation will be permanently deleted." data-confirm-danger="true" data-confirm-button="Delete">
+            {% csrf_token %}<button class="btn btn-ghost btn-sm" aria-label="Delete conversation"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="chat-messages" id="messages" aria-live="polite">
+        {% if not ai_enabled %}
+          <div class="alert alert-warning small mb-0" role="status"><i class="bi bi-exclamation-triangle"></i> AI is not configured on this server yet. Administrators: set <code>AI_PROVIDER</code> and <code>AI_API_KEY</code> in <code>.env</code>.</div>
+        {% endif %}
+        {% for m in chat_messages %}
+          <div class="chat-msg {{ m.role }}">
+            <span class="avatar" aria-hidden="true">{% if m.role == 'user' %}{{ user.display_name|first|upper }}{% else %}<i class="bi bi-lightbulb"></i>{% endif %}</span>
+            <div class="chat-bubble {% if m.role == 'assistant' %}prose{% endif %}" {% if m.role == 'assistant' %}data-render-markdown{% endif %}>{{ m.content }}</div>
+          </div>
+        {% empty %}
+          <div class="text-center my-auto py-4" id="welcome">
+            <div class="icon-tile mx-auto mb-3" style="width:64px;height:64px;font-size:1.8rem"><i class="bi bi-lightbulb"></i></div>
+            <h2 class="h4">Hi {{ user.display_name }}, what shall we study?</h2>
+            <p class="text-muted">Ask anything from your syllabus — explanations, practice questions, quizzes or revision.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2 mt-3" style="max-width:720px;margin:auto">
+              {% for p in starter_prompts %}<button type="button" class="chip" data-prompt="{{ p }}">{{ p }}</button>{% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <form class="chat-input" id="chatForm" autocomplete="off">
+        <div class="d-flex gap-2 align-items-end">
+          <label for="chatText" class="visually-hidden">Message</label>
+          <textarea id="chatText" class="form-control" rows="1" maxlength="6000" placeholder="Ask a question… (Shift+Enter for a new line)" {% if not ai_enabled %}disabled{% endif %}>{{ prefill }}</textarea>
+          <button type="submit" class="btn btn-primary btn-icon flex-shrink-0" id="sendBtn" aria-label="Send message" {% if not ai_enabled %}disabled{% endif %}><i class="bi bi-send-fill"></i></button>
+        </div>
+        <p class="small text-muted mt-2 mb-0">AI can make mistakes. Verify important facts with your textbook.</p>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  window.PREPAI_ASSISTANT = {
+    conversationId: {% if conversation %}{{ conversation.pk }}{% else %}null{% endif %},
+    listUrl: "{% url 'api:conversation-list' %}",
+    userInitial: "{{ user.display_name|first|upper|escapejs }}",
+  };
+</script>
+<script src="{% static 'js/assistant.js' %}"></script>
+{% endblock %}

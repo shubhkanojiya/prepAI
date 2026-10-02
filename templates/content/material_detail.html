@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static prepai_tags %}
+{% block title %}{{ material.title }} · {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ material.summary|default:material.title }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    {% include "components/breadcrumbs.html" with board=material.subject.class_level.board class_level=material.subject.class_level subject=material.subject chapter=material.chapter topic=material.topic %}
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <span class="badge-soft"><i class="bi bi-{{ material.icon }}"></i> {{ material.get_material_type_display }}</span>
+      <span class="badge-muted"><i class="bi bi-clock"></i> {{ material.reading_minutes }} min read</span>
+      {% if material.is_sample %}<span class="badge-sample">Sample content</span>{% endif %}
+    </div>
+    <h1>{{ material.title }}</h1>
+    {% if material.summary %}<p class="lead text-2 mb-3">{{ material.summary }}</p>{% endif %}
+    <div class="d-flex flex-wrap gap-2">
+      {% bookmark_button material %}
+      {% if material.file %}<a href="{% url 'content:file' material.slug %}?download=1" class="btn btn-ghost"><i class="bi bi-download"></i> Download PDF</a>{% endif %}
+      <button type="button" class="btn btn-ghost" data-share data-title="{{ material.title }}"><i class="bi bi-share"></i> Share</button>
+      <a href="{% url 'assistant:home' %}?q={{ 'Quiz me on '|add:material.title|urlencode }}" class="btn btn-ghost"><i class="bi bi-lightbulb"></i> Quiz me with AI</a>
+    </div>
+  </header>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% if material.body %}
+      <article class="pa-card mb-4"><div class="card-body p-4 prose" data-render-math>{{ material.body|markdown }}</div></article>
+      {% endif %}
+      {% if material.file %}
+        {% url 'content:file' material.slug as file_url %}
+        {% include "components/pdf_viewer.html" with src=file_url download_url=file_url|add:"?download=1" title=material.title %}
+      {% endif %}
+      {% if not material.body and not material.file %}
+        {% include "components/empty_state.html" with icon="journal" title="Content coming soon" %}
+      {% endif %}
+    </div>
+    <aside class="col-lg-4">
+      <div class="pa-card sticky-side">
+        <div class="pa-card-header"><h2>Related material</h2></div>
+        <ul class="list-group list-group-flush">
+          {% for m in related %}<li class="list-group-item bg-transparent"><a href="{{ m.get_absolute_url }}" class="text-reset d-flex gap-2"><i class="bi bi-{{ m.icon }} text-muted"></i><span>{{ m.title }}</span></a></li>
+          {% empty %}<li class="list-group-item bg-transparent small text-muted">Nothing related yet.</li>{% endfor %}
+        </ul>
+        {% if material.chapter %}
+        <div class="card-body border-top">
+          <a href="{{ material.chapter.get_absolute_url }}" class="btn btn-soft w-100"><i class="bi bi-bookmark"></i> Go to chapter</a>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}{% if material.file %}<script type="module" src="{% static 'js/pdf-viewer.js' %}"></script>{% endif %}{% endblock %}
