@@ -17,3 +17,4 @@ backups/
 # Local copies of secrets / env files
 /database prepai.txt
 *.env.txt
+/r2.txt
