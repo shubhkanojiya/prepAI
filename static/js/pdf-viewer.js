@@ -103,7 +103,9 @@ function initViewer(root) {
   window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (fitWidth && pdf) layout(); }, 200); });
 
   setStatus('<div class="skeleton" style="height:420px;max-width:640px;margin:0 auto"></div><p class="small text-muted mt-2">Loading PDF…</p>');
-  pdfjsLib.getDocument({ url: root.dataset.src, withCredentials: true }).promise.then(async (doc) => {
+  // No withCredentials: with cloud storage /file/ redirects to a signed R2 URL, and sending
+  // cookies cross-origin would need stricter CORS. Same-origin requests still carry cookies.
+  pdfjsLib.getDocument({ url: root.dataset.src }).promise.then(async (doc) => {
     pdf = doc;
     pageCount.textContent = doc.numPages;
     pageInput.max = doc.numPages;
