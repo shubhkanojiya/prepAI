@@ -30,7 +30,7 @@ class SubjectViewSet(PublishedContentViewSet):
 
 
 class ChapterViewSet(PublishedContentViewSet):
-    queryset = Chapter.objects.select_related("subject")
+    queryset = Chapter.objects.select_related("subject__class_level__board")
     serializer_class = ChapterSerializer
     filterset_fields = ["subject", "subject__class_level"]
     search_fields = ["name"]
@@ -38,7 +38,7 @@ class ChapterViewSet(PublishedContentViewSet):
 
 
 class TopicViewSet(PublishedContentViewSet):
-    queryset = Topic.objects.all()
+    queryset = Topic.objects.select_related("chapter__subject__class_level__board")
     serializer_class = TopicSerializer
     filterset_fields = ["chapter"]
     search_fields = ["name"]

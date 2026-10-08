@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Previous Year Papers{% if board %} — {{ board.short_name }}{% if class_level %} {{ class_level.name }}{% endif %}{% endif %} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <header class="page-header">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+      <div class="me-auto">
+        <h1>Previous Year Papers</h1>
+        <p class="text-muted mb-0">Board exam papers from the last {{ years|length }} years ({{ years|last }}–{{ years|first }}). Pick your board and class, then open any year.</p>
+      </div>
+      <form method="get" action="{% url 'papers:previous_year_list' %}" class="pyp-search" role="search">
+        {% if board %}<input type="hidden" name="board" value="{{ board.id }}">{% endif %}
+        {% if class_level %}<input type="hidden" name="class_level" value="{{ class_level.id }}">{% endif %}
+        <div class="input-group input-group-sm">
+          <input type="search" class="form-control" name="q" placeholder="Search papers…" aria-label="Search previous year papers">
+          <button class="btn btn-primary" type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
+        </div>
+      </form>
+    </div>
+  </header>
+
+  {% if boards %}
+  <form method="get" class="filter-bar mb-4" data-auto-submit aria-label="Filter previous year papers">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-board">Board</label>
+        <select class="form-select form-select-sm" name="board" id="pf-board">
+          {% for b in boards %}<option value="{{ b.slug }}" {% if b == board %}selected{% endif %}>{{ b.short_name }}{% if b.paper_count %} ({{ b.paper_count }}){% endif %}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-class">Class</label>
+        <select class="form-select form-select-sm" name="class_level" id="pf-class" {% if not classes %}disabled{% endif %}>
+          {% for c in classes %}<option value="{{ c.slug }}" {% if c == class_level %}selected{% endif %}>{{ c.name }}</option>{% empty %}<option value="">No classes yet</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-subject">Subject</label>
+        <select class="form-select form-select-sm" name="subject" id="pf-subject" {% if not subjects %}disabled{% endif %}>
+          <option value="">All subjects</option>
+          {% for s in subjects %}<option value="{{ s.id }}" {% if s == subject %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-chapter">Chapter</label>
+        <select class="form-select form-select-sm" name="chapter" id="pf-chapter" {% if not chapters %}disabled{% endif %}>
+          <option value="">{% if not subject %}Select subject first{% elif chapters %}All chapters{% else %}No chapters yet{% endif %}</option>
+          {% for c in chapters %}<option value="{{ c.id }}" {% if c == chapter %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-year">Year</label>
+        <select class="form-select form-select-sm" name="year" id="pf-year">
+          <option value="">All {{ all_years|length }} years</option>
+          {% for y in all_years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md">
+        <label class="form-label small mb-1" for="pf-exam">Exam</label>
+        <select class="form-select form-select-sm" name="exam_type" id="pf-exam">
+          <option value="">All exams</option>
+          {% for v, l in exam_types %}<option value="{{ v }}" {% if v == exam_type %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <noscript><button class="btn btn-primary btn-sm mt-2" type="submit">Apply filters</button></noscript>
+  </form>
+  {% endif %}
+
+  {% if chapter %}
+  <section class="pa-card mb-4" aria-labelledby="chapter-q-heading">
+    <div class="pa-card-header">
+      <h2 id="chapter-q-heading">{{ chapter.name }} in previous papers</h2>
+      <span class="small text-muted">{{ chapter_questions|length }} question{{ chapter_questions|length|pluralize }}</span>
+    </div>
+    {% if chapter_questions %}
+    <ul class="list-unstyled mb-0">
+      {% for item in chapter_questions %}
+      <li class="card-body border-top border-soft">
+        <a href="{{ item.question.get_absolute_url }}" class="text-reset d-block mb-2 line-clamp-3" data-render-math>{{ item.question.text }}</a>
+        <div class="d-flex flex-wrap align-items-center gap-2 small">
+          <span class="text-muted">Asked in</span>
+          {% for a in item.appearances %}<a href="{{ a.paper.get_absolute_url }}" class="year-pill" title="{{ a.paper.title }}{% if a.question_number %} · Q{{ a.question_number }}{% endif %}">{{ a.year }}</a>{% endfor %}
+          <span class="badge-muted ms-auto">{{ item.question.marks|floatformat:"-2" }} mark{{ item.question.marks|pluralize }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="card-body small text-muted">No questions from this chapter have been tagged in these papers yet. Board papers cover the whole syllabus, so open the full papers below.</div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if rows and not available and not is_filtered %}
+  <div class="alert alert-info small d-flex flex-wrap align-items-center gap-2" role="note">
+    <i class="bi bi-info-circle"></i>
+    <span class="me-auto">{{ board.short_name }} hasn't published its {{ class_level.name }} board papers for these years on its official website.</span>
+    {% if model_papers %}<a href="{% url 'papers:list' %}?paper_type=model&board={{ board.id }}&class_level={{ class_level.id }}" class="btn btn-soft btn-sm">See {{ model_papers }} official model paper{{ model_papers|pluralize }}</a>{% endif %}
+  </div>
+  {% endif %}
+  {% if rows %}
+  <section class="pa-card">
+    <div class="pa-card-header">
+      <h2>{{ board.short_name }} · {{ class_level.name }}{% if subject %} · {{ subject.name }}{% endif %}</h2>
+      <span class="small text-muted">{{ available }} of {{ possible }} subject-years available{% if is_filtered %} · <a href="?board={{ board.slug }}&class_level={{ class_level.slug }}">Clear filters</a>{% endif %}</span>
+    </div>
+    <ul class="pyp-rows">
+      {% for row in rows %}
+      <li class="pyp-row">
+        <div class="pyp-subject">
+          <span class="icon-tile sm" style="background: color-mix(in srgb, {{ row.subject.color }} 14%, transparent); color: {{ row.subject.color }}"><i class="bi bi-{{ row.subject.icon }}"></i></span>
+          <div class="min-w-0">
+            <a href="{{ row.subject.get_absolute_url }}" class="fw-semibold text-reset d-block text-truncate">{{ row.subject.name }}</a>
+            <a href="{% url 'papers:previous_year_list' %}?board={{ board.id }}&class_level={{ class_level.id }}&subject={{ row.subject.id }}" class="small">All years</a>
+          </div>
+        </div>
+        {% include "components/pyp_years.html" %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <p class="small text-muted mt-3 mb-0"><span class="pyp-year available pyp-legend"><i class="bi bi-file-earmark-pdf"></i>Year</span> open paper · <span class="pyp-year missing pyp-legend">Year</span> not added yet · <span class="pyp-extra">Supp.</span> supplementary / other exam</p>
+  {% elif class_level %}
+    {% include "components/empty_state.html" with icon="journal-x" title="No subjects in this class yet" message="Subjects appear here once they are added to the board." %}
+  {% elif board %}
+    {% include "components/empty_state.html" with icon="mortarboard" title="No classes for this board yet" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="bank" title="No boards yet" %}
+  {% endif %}
+</div>
+{% endblock %}

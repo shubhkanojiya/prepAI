@@ -18,6 +18,7 @@ from collections import defaultdict
 from difflib import SequenceMatcher
 from statistics import mean
 
+from django.core.cache import cache
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -240,6 +241,13 @@ def predict(text, board=None, class_level=None, subject=None):
 
 def predict_for_question(question):
     """Prediction block for a question already in the bank (used on its detail page)."""
+    # predict() fuzzy-matches against hundreds of questions; cache the result per question.
+    key = f"predict_for_question:{question.pk}:{question.updated_at.timestamp()}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
     report = predict(question.text, subject=question.subject_id)
-    return {k: report[k] for k in ("years", "times_appeared", "available_years", "pattern",
-                                   "likelihood", "upcoming_year")}
+    block = {k: report[k] for k in ("years", "times_appeared", "available_years", "pattern",
+                                    "likelihood", "upcoming_year")}
+    cache.set(key, block, 60 * 60)
+    return block

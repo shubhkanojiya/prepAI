@@ -10,3 +10,10 @@ htmlcov/
 .idea/
 .vscode/
 *.log
+/papers_import/
+/papers_import_model/
+backups/
+
+# Local copies of secrets / env files
+/database prepai.txt
+*.env.txt

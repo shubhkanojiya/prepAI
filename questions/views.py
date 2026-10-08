@@ -5,6 +5,7 @@ from analytics.models import UserActivity
 from analytics.services import log_activity
 from boards.models import Subject
 from core.filters import apply_hierarchy_filters, paginate, to_int
+from testengine.services import locked_question_ids
 
 from .models import Question
 from .services.frequency import DISCLAIMER, analyze_question, subject_overview
@@ -45,6 +46,7 @@ def question_detail(request, pk):
     log_activity(request.user, UserActivity.Type.VIEW_QUESTION, question.text[:80], obj=question)
     return render(request, "questions/question_detail.html", {
         "question": question,
+        "answers_locked": question.pk in locked_question_ids(request.user),
         "analysis": analyze_question(question),
         "prediction": predict_for_question(question),
     })

@@ -3,7 +3,7 @@ Global search across boards, classes, subjects, chapters, topics, questions,
 papers, previous-year papers, tests and study materials.
 
 Matching: every search term must appear in at least one of the category's
-fields (AND of ORs, case-insensitive). This works on PostgreSQL and SQLite;
+fields (AND of ORs, case-insensitive). This works on PostgreSQL;
 for very large catalogues swap `_text_filter` for PostgreSQL full-text
 search (SearchVector/SearchRank) or an external engine — callers are unaffected.
 """
@@ -20,6 +20,7 @@ from testengine.models import Test
 from .models import SearchHistory
 
 MAX_TERMS = 8
+POPULAR_MIN_USERS = 3  # distinct users before a query is offered as a suggestion
 
 
 def _text_filter(fields, query):
@@ -246,8 +247,11 @@ def suggestions(prefix, limit=8):
         add(t.name, "topic", t.get_absolute_url())
     for p in QuestionPaper.objects.published().filter(title__icontains=prefix)[:2]:
         add(p.title, "paper", p.get_absolute_url())
+    # Only suggest searches made by several different people, so one user's private queries
+    # are never shown to everyone (and a single user can't plant suggestions).
     popular = (SearchHistory.objects.filter(normalized_query__startswith=normalize_text(prefix))
-               .values("query").annotate(n=Count("id")).order_by("-n")[:3])
+               .values("query").annotate(n=Count("user", distinct=True))
+               .filter(n__gte=POPULAR_MIN_USERS).order_by("-n")[:3])
     for row in popular:
         add(row["query"], "popular")
 

@@ -76,6 +76,13 @@ class QuestionPaper(PublishableModel):
     def is_previous_year(self):
         return self.paper_type == self.PaperType.PREVIOUS_YEAR
 
+    EXAM_SHORT_LABELS = {"annual": "Main", "supplementary": "Supp.", "term_1": "Term 1",
+                         "term_2": "Term 2", "pre_board": "Pre-board", "other": "Other"}
+
+    @property
+    def exam_short_label(self):
+        return self.EXAM_SHORT_LABELS.get(self.exam_type, self.get_exam_type_display())
+
 
 class PreviousYearPaperManager(models.Manager.from_queryset(PublishableQuerySet)):
     def get_queryset(self):

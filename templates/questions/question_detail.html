@@ -24,7 +24,7 @@
           {% if question.options.all %}
           <ol class="option-list mb-3" type="A">
             {% for option in question.options.all %}
-            <li class="option-item" data-option data-correct="{{ option.is_correct|yesno:'1,0' }}">
+            <li class="option-item" data-option {% if not answers_locked %}data-correct="{{ option.is_correct|yesno:'1,0' }}"{% endif %}>
               <span class="option-letter">{% cycle 'A' 'B' 'C' 'D' 'E' 'F' %}</span><span data-render-math>{{ option.text }}</span>
             </li>
             {% endfor %}
@@ -32,12 +32,15 @@
           {% endif %}
 
           <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#answer" aria-expanded="false" aria-controls="answer" id="revealBtn"><i class="bi bi-eye"></i> Show answer</button>
+            {% if not answers_locked %}<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#answer" aria-expanded="false" aria-controls="answer" id="revealBtn"><i class="bi bi-eye"></i> Show answer</button>{% endif %}
             {% bookmark_button question %}
             <button type="button" class="btn btn-ghost" data-share data-title="PrepAI question"><i class="bi bi-share"></i> Share</button>
             <a href="{% url 'assistant:home' %}?q={{ 'Explain this question step by step: '|add:question.text|truncatechars:900|urlencode }}" class="btn btn-ghost"><i class="bi bi-lightbulb"></i> Ask AI</a>
           </div>
 
+          {% if answers_locked %}
+          <p class="alert alert-info small mt-3 mb-0" role="status"><i class="bi bi-lock"></i> This question is in a test you haven't submitted yet. Its answer will be shown here after you submit the test.</p>
+          {% else %}
           <div class="collapse mt-4" id="answer">
             {% if question.answer %}
             <h2 class="h6 text-uppercase small text-muted fw-bold">Answer</h2>
@@ -49,6 +52,7 @@
             {% endif %}
             {% if not question.answer and not question.explanation and not question.options.all %}<p class="text-muted mb-0">No answer has been added for this question yet.</p>{% endif %}
           </div>
+          {% endif %}
         </div>
       </article>
 

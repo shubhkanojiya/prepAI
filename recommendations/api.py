@@ -19,7 +19,8 @@ class RecommendationSerializer(serializers.ModelSerializer):
         return getattr(target, "title", None) or getattr(target, "name", None) or str(target)
 
     def get_url(self, obj):
-        return obj.content_object.get_absolute_url()
+        target = obj.content_object
+        return target.get_absolute_url() if target is not None else None
 
 
 class RecommendationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

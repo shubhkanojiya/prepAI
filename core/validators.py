@@ -53,6 +53,9 @@ class ImageValidator:
         return isinstance(other, ImageValidator)
 
 
+MAX_IMAGE_PIXELS = 64_000_000  # fits 50 MP phone photos; blocks decompression bombs
+
+
 def validate_image_file(file_obj):
     """Validate and return the detected Pillow format (e.g. 'JPEG')."""
     from PIL import Image, UnidentifiedImageError
@@ -67,10 +70,14 @@ def validate_image_file(file_obj):
         with Image.open(file_obj) as img:
             img.verify()
             image_format = img.format
-    except (UnidentifiedImageError, OSError, SyntaxError):
+            width, height = img.size
+    except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError):
         raise ValidationError("The uploaded file is not a valid image.")
     finally:
         file_obj.seek(0)
+    # A small file can still decode to a huge bitmap and exhaust server memory.
+    if width * height > MAX_IMAGE_PIXELS:
+        raise ValidationError("Image dimensions are too large. Please upload a smaller photo.")
     if image_format not in ALLOWED_IMAGE_FORMATS:
         raise ValidationError("Unsupported image format. Use JPG, PNG, WEBP or GIF.")
     return image_format

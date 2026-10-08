@@ -5,6 +5,7 @@ from analytics.models import UserActivity
 from analytics.services import log_activity
 from content.models import StudyMaterial
 from papers.models import QuestionPaper
+from papers.services import year_grid
 from questions.models import Question
 from testengine.models import Test
 
@@ -63,7 +64,9 @@ def subject_detail(request, board_slug, class_slug, subject_slug):
         "class_level": subject.class_level,
         "subject": subject,
         "chapters": chapters,
-        "papers": QuestionPaper.objects.published().filter(subject=subject)[:6],
+        "papers": QuestionPaper.objects.published().filter(subject=subject)
+        .select_related("subject__class_level__board")[:6],
+        "pyp_row": year_grid([subject])[0],
         "tests": Test.objects.published().filter(subject=subject)
         .annotate(question_count=Count("test_questions"))[:6],
         "materials": StudyMaterial.objects.published().filter(subject=subject)[:6],

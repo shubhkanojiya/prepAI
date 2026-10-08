@@ -3,6 +3,7 @@ from rest_framework import mixins, permissions, serializers, status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 
 from core.viewsets import ScopedThrottleMixin
 
@@ -43,6 +44,12 @@ class ScanRequestSerializer(serializers.Serializer):
         return attrs
 
 
+class GuestScanThrottle(AnonRateThrottle):
+    """Guests can scan, but each AI call costs money, so they get a small per-IP daily budget."""
+
+    scope = "ai_scanner_guest"
+
+
 class ScannerViewSet(ScopedThrottleMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin,
                      mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """POST an image (multipart) or typed question to scan; GET your scan history."""
@@ -55,6 +62,12 @@ class ScannerViewSet(ScopedThrottleMixin, mixins.ListModelMixin, mixins.Retrieve
         if self.action == "create":
             return [permissions.AllowAny()]  # guests may scan; history is kept for users only
         return [permissions.IsAuthenticated()]
+
+    def get_throttles(self):
+        throttles = super().get_throttles()
+        if self.action == "create":
+            throttles.append(GuestScanThrottle())  # no-op for logged-in users
+        return throttles
 
     def get_queryset(self):
         return ScannerHistory.objects.filter(user=self.request.user).select_related("subject",

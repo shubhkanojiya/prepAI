@@ -121,11 +121,14 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # ---------------------------------------------------------------------------
-# Database — PostgreSQL via DATABASE_URL; SQLite fallback for local dev only.
+# Database — PostgreSQL only, configured via DATABASE_URL.
 # ---------------------------------------------------------------------------
+if not env("DATABASE_URL", "").startswith(("postgres://", "postgresql://")):
+    raise ImproperlyConfigured("DATABASE_URL must be set to a PostgreSQL URL (postgres://...).")
+
 DATABASES = {
     "default": dj_database_url.parse(
-        env("DATABASE_URL") or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",  # empty value → SQLite
+        env("DATABASE_URL"),
         conn_max_age=env_int("DB_CONN_MAX_AGE", 600),
         conn_health_checks=True,
     )
@@ -201,6 +204,8 @@ if STORAGE_BACKEND == "s3":
             "secret_key": env("AWS_SECRET_ACCESS_KEY"),
             "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
             "region_name": env("AWS_S3_REGION_NAME"),
+            # Cloudflare R2 / other S3-compatible stores: https://<account_id>.r2.cloudflarestorage.com
+            "endpoint_url": env("AWS_S3_ENDPOINT_URL") or None,
             "custom_domain": env("AWS_S3_CUSTOM_DOMAIN") or None,
             "querystring_auth": True,
             "file_overwrite": False,
@@ -209,12 +214,17 @@ if STORAGE_BACKEND == "s3":
 else:
     default_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
 
+# Vercel runs the app as a serverless function and never runs collectstatic, so there is no
+# manifest: WhiteNoise serves the files straight from the app/static folders instead.
+ON_VERCEL = bool(env("VERCEL"))
+WHITENOISE_USE_FINDERS = ON_VERCEL
+
 STORAGES = {
     "default": default_storage,
     "staticfiles": {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
-            if DEBUG
+            if DEBUG or ON_VERCEL
             else "whitenoise.storage.CompressedManifestStaticFilesStorage"
         )
     },
@@ -258,11 +268,15 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
+    # Number of reverse proxies in front of the app. Throttles identify clients by IP; with this
+    # unset DRF would trust a client-supplied X-Forwarded-For header and limits could be dodged.
+    "NUM_PROXIES": env_int("NUM_PROXIES", 0 if DEBUG else 1),
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON", "200/hour"),
         "user": env("THROTTLE_USER", "2000/hour"),
         "ai_assistant": env("THROTTLE_AI_ASSISTANT", "60/hour"),
         "ai_scanner": env("THROTTLE_AI_SCANNER", "30/hour"),
+        "ai_scanner_guest": env("THROTTLE_AI_SCANNER_GUEST", "5/day"),
     },
     "EXCEPTION_HANDLER": "core.api.exception_handler",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"]

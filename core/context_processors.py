@@ -17,7 +17,8 @@ def site(request):
         "SITE_NAME": settings.SITE_NAME,
         "SITE_TAGLINE": settings.SITE_TAGLINE,
         "nav_boards": nav_boards,
-        "google_auth_enabled": bool(settings.GOOGLE_OAUTH_CLIENT_ID),
+        # The button links to allauth's route, so it needs allauth installed as well as a client ID.
+        "google_auth_enabled": bool(settings.GOOGLE_OAUTH_CLIENT_ID) and "allauth" in settings.INSTALLED_APPS,
         "MAX_IMAGE_UPLOAD_MB": settings.MAX_IMAGE_UPLOAD_MB,
         "user_theme": "system",
         "unread_notifications": 0,

@@ -4,9 +4,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from accounts.ratelimit import rate_limit
+
 admin.site.site_header = "PrepAI Administration"
 admin.site.site_title = "PrepAI Admin"
 admin.site.index_title = "Content & platform management"
+# Same failed-login limit as the site login, so /admin/ can't be brute-forced.
+admin.site.login = rate_limit("login", limit=10, window=15 * 60, failures_only=True)(admin.site.login)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

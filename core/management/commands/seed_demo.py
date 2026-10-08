@@ -134,7 +134,9 @@ class Command(BaseCommand):
     def _reset(self):
         for model in (Test, QuestionPaper, StudyMaterial, Question):
             model.objects.filter(is_sample=True).delete()
-        Board.objects.filter(is_sample=True).delete()
+        # Only drop demo boards that hold no real classes; real boards (cbse, …) are shared with
+        # load_subjects/import_papers and deleting them would cascade to every real paper.
+        Board.objects.filter(is_sample=True).exclude(classes__is_sample=False).delete()
         self.stdout.write("Removed existing sample content.")
 
     def _boards(self):
@@ -142,17 +144,24 @@ class Command(BaseCommand):
         for short, name, btype, state, featured, order in D.BOARDS:
             board, _ = Board.objects.update_or_create(
                 slug=slugify(short), defaults=dict(name=name, short_name=short, board_type=btype, state=state,
-                                                   is_featured=featured, order=order, is_sample=True))
+                                                   is_featured=featured, order=order),
+                create_defaults=dict(name=name, short_name=short, board_type=btype, state=state,
+                                     is_featured=featured, order=order, is_sample=True))
             for number, subjects in D.CURRICULUM.get(short, {}).items():
                 cl, _ = ClassLevel.objects.update_or_create(
                     board=board, slug=f"class-{number}",
-                    defaults=dict(name=f"Class {number}", number=number, order=number, is_sample=True))
+                    defaults=dict(name=f"Class {number}", number=number, order=number),
+                    create_defaults=dict(name=f"Class {number}", number=number, order=number,
+                                         is_sample=True))
                 self.classes[(short, number)] = cl
                 for s_order, (s_name, meta) in enumerate(subjects.items()):
                     subject, _ = Subject.objects.update_or_create(
                         class_level=cl, slug=slugify(s_name),
                         defaults=dict(name=s_name, icon=meta["icon"], color=meta["color"],
-                                      is_popular=meta["popular"], order=s_order, is_sample=True))
+                                      is_popular=meta["popular"], order=s_order),
+                        create_defaults=dict(name=s_name, icon=meta["icon"], color=meta["color"],
+                                             is_popular=meta["popular"], order=s_order,
+                                             is_sample=True))
                     self.subjects[(short, number, s_name)] = subject
                     for c_order, (c_name, topics) in enumerate(meta["chapters"].items(), start=1):
                         chapter, _ = Chapter.objects.update_or_create(

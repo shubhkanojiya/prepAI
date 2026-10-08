@@ -40,9 +40,12 @@ def make_user(email="student@example.com", password="Str0ng-pass-123", **extra):
     return get_user_model().objects.create_user(email=email, password=password, **extra)
 
 
-def make_paper(subject, year, slug=None, paper_type="previous_year"):
-    return QuestionPaper.objects.create(title=f"Paper {year}", slug=slug or f"paper-{year}", subject=subject,
-                                        year=year, paper_type=paper_type)
+def make_paper(subject, year, slug=None, paper_type="previous_year", pdf=None):
+    slug = slug or f"paper-{year}"
+    # Real papers always have a PDF; the archive grid skips ones without (pass pdf="" to test that).
+    pdf = f"papers/{year}/{slug}.pdf" if pdf is None else pdf
+    return QuestionPaper.objects.create(title=f"Paper {year}", slug=slug, subject=subject,
+                                        year=year, paper_type=paper_type, pdf=pdf)
 
 
 def add_appearance(question, paper, number="1"):

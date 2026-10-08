@@ -9,8 +9,8 @@
     const dark = document.documentElement.getAttribute("data-bs-theme") === "dark";
     // brand: single-series marks. series1/2: validated categorical pair for multi-series.
     return dark
-      ? { brand: "#5eead4", series1: "#3987e5", series2: "#d95926", neutral: "#4b5e5c", surface: "#111d1c", text: "#b2c4c2", muted: "#7f9391", grid: "#223533", axis: "#2f4745" }
-      : { brand: "#0f766e", series1: "#2a78d6", series2: "#eb6834", neutral: "#c3d0cf", surface: "#ffffff", text: "#3f4e4d", muted: "#62706e", grid: "#e6eeed", axis: "#c3d0cf" };
+      ? { brand: "#60a5fa", series1: "#3987e5", series2: "#d95926", neutral: "#475569", surface: "#162033", text: "#cbd5e1", muted: "#94a3b8", grid: "#273449", axis: "#334155" }
+      : { brand: "#2563eb", series1: "#2a78d6", series2: "#eb6834", neutral: "#cbd5e1", surface: "#ffffff", text: "#334155", muted: "#64748b", grid: "#e9eef5", axis: "#cbd5e1" };
   }
 
   function read(id) {

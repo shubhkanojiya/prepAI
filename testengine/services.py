@@ -32,6 +32,13 @@ class TestEngineError(Exception):
 # ---------------------------------------------------------------------------
 def start_attempt(user, test):
     """Resume the user's active attempt or start a new one."""
+    with transaction.atomic():
+        # Lock the user row so a double-click can't create two attempts (or exceed max_attempts).
+        list(type(user).objects.select_for_update().filter(pk=user.pk).values_list("pk", flat=True))
+        return _start_attempt(user, test)
+
+
+def _start_attempt(user, test):
     active = TestAttempt.objects.filter(user=user, test=test,
                                         status=TestAttempt.Status.IN_PROGRESS).first()
     if active:
@@ -64,6 +71,21 @@ def start_attempt(user, test):
     return attempt
 
 
+def locked_question_ids(user):
+    """
+    Questions in the user's unfinished tests. Their answers stay hidden in the question bank
+    until the test is submitted, so a student can't look them up mid-test.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return set()
+    active = [expire_if_needed(a) for a in TestAttempt.objects.filter(
+        user=user, status=TestAttempt.Status.IN_PROGRESS).select_related("test")]
+    test_ids = [a.test_id for a in active if a.is_in_progress]
+    if not test_ids:
+        return set()
+    return set(TestQuestion.objects.filter(test_id__in=test_ids).values_list("question_id", flat=True))
+
+
 def expire_if_needed(attempt):
     """Auto-submit an in-progress attempt whose time (plus grace) has run out."""
     if attempt.is_in_progress and attempt.remaining_seconds == 0:
@@ -85,12 +107,20 @@ def ordered_test_questions(attempt):
 
 def save_answer(attempt, test_question_id, option_ids=None, text_answer=None,
                 marked_for_review=None, time_spent_seconds=0):
-    if not attempt.is_in_progress:
-        raise TestEngineError("This test has already been submitted.")
-    if (timezone.now() - attempt.deadline).total_seconds() > GRACE_SECONDS:
-        submit_attempt(attempt, auto=True)
-        raise TestEngineError("Time is up. Your test was submitted automatically.")
+    with transaction.atomic():
+        # Lock the attempt so an answer can't land after a concurrent submit has graded it.
+        attempt = TestAttempt.objects.select_for_update().select_related("test").get(pk=attempt.pk)
+        if not attempt.is_in_progress:
+            raise TestEngineError("This test has already been submitted.")
+        if (timezone.now() - attempt.deadline).total_seconds() <= GRACE_SECONDS:
+            return _write_answer(attempt, test_question_id, option_ids, text_answer,
+                                 marked_for_review, time_spent_seconds)
+    submit_attempt(attempt, auto=True)  # outside the block above so the raise can't roll it back
+    raise TestEngineError("Time is up. Your test was submitted automatically.")
 
+
+def _write_answer(attempt, test_question_id, option_ids, text_answer, marked_for_review,
+                  time_spent_seconds):
     try:
         answer = attempt.answers.select_related("test_question__question").get(
             test_question_id=test_question_id
@@ -159,6 +189,8 @@ def submit_attempt(attempt, auto=False):
         return attempt
 
     now = timezone.now()
+    if now > attempt.deadline:
+        auto = True  # past the time limit counts as auto-submitted, whatever the client says
     score = max_score = Decimal(0)
     correct = incorrect = unanswered = ungraded = 0
     answers = attempt.answers.select_related("test_question__question").prefetch_related(

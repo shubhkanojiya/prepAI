@@ -97,7 +97,7 @@ class AnthropicProvider(BaseAIProvider):
             self.client = anthropic.Anthropic(
                 api_key=settings.AI_API_KEY or None,  # None → SDK resolves ANTHROPIC_API_KEY etc.
                 timeout=float(settings.AI_TIMEOUT),
-                max_retries=2,
+                max_retries=1,
             )
         except anthropic.AnthropicError as exc:
             raise AIServiceError(f"Could not initialise Anthropic client: {exc}") from exc
@@ -247,7 +247,7 @@ class OpenAICompatibleProvider(BaseAIProvider):
         if "openrouter.ai" in base_url:  # optional attribution headers OpenRouter recommends
             headers = {"HTTP-Referer": settings.SITE_URL, "X-Title": settings.SITE_NAME}
         self.client = openai.OpenAI(api_key=settings.AI_API_KEY, base_url=base_url,
-                                    timeout=float(settings.AI_TIMEOUT), max_retries=2,
+                                    timeout=float(settings.AI_TIMEOUT), max_retries=1,
                                     default_headers=headers or None)
         self.model = settings.AI_MODEL or default_model
         if not self.model:
@@ -445,16 +445,19 @@ def reset_provider_cache():
 
 
 def is_configured() -> bool:
-    """True when an AI provider is selected and credentials appear to be present."""
+    """True when an AI provider is selected, credentials appear to be present and it initialised."""
     name = (settings.AI_PROVIDER or "").lower()
     if name == "mock":
         return True
     if name == "anthropic":
-        return bool(settings.AI_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
-                    or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
-    if name in ("openai_compatible", "groq", "openrouter", "xai"):
-        return bool(settings.AI_API_KEY)
-    return False
+        has_credentials = bool(settings.AI_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
+                               or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+    elif name in ("openai_compatible", "groq", "openrouter", "xai"):
+        has_credentials = bool(settings.AI_API_KEY)
+    else:
+        return False
+    # e.g. a missing AI_MODEL makes get_provider() fall back to DisabledProvider
+    return has_credentials and not isinstance(get_provider(), DisabledProvider)
 
 
 # ---------------------------------------------------------------------------

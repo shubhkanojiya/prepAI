@@ -13,6 +13,14 @@
     {% if subject.description %}<p class="text-2 mt-3 mb-0">{{ subject.description }}</p>{% endif %}
   </header>
 
+  <section class="pa-card mb-4" aria-labelledby="pyp-heading">
+    <div class="pa-card-header">
+      <h2 id="pyp-heading"><i class="bi bi-clock-history text-muted me-1"></i> Previous year papers</h2>
+      <a href="{% url 'papers:previous_year' %}?board={{ board.slug }}&class_level={{ class_level.slug }}" class="small">All {{ class_level.name }} subjects</a>
+    </div>
+    <div class="card-body">{% include "components/pyp_years.html" with row=pyp_row %}</div>
+  </section>
+
   <div class="row g-4">
     <div class="col-lg-8">
       <h2 class="h5 mb-3">Chapters</h2>

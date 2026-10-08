@@ -1,0 +1,19 @@
+{# Params: row — one entry from papers.services.year_grid (subject, cells, available) #}
+<ul class="pyp-years" aria-label="Previous year papers for {{ row.subject.name }}">
+  {% for cell in row.cells %}
+  <li class="pyp-cell">
+    {% if cell.papers %}
+      {% with main=cell.papers.0 %}
+      <a href="{{ main.get_absolute_url }}" class="pyp-year available" title="{{ main.title }}{% if main.is_sample %} (demo paper, not an official board paper){% endif %}">
+        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>{{ cell.year }}{% if main.is_sample %}<span class="pyp-sample"><span class="visually-hidden"> (</span>demo<span class="visually-hidden"> paper, not an official board paper)</span></span>{% endif %}
+      </a>
+      {% endwith %}
+      {% for extra in cell.papers|slice:"1:" %}
+      <a href="{{ extra.get_absolute_url }}" class="pyp-extra" title="{{ extra.title }}">{{ extra.exam_short_label }}</a>
+      {% endfor %}
+    {% else %}
+      <span class="pyp-year missing" title="{{ cell.year }} paper not added yet">{{ cell.year }}</span>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>

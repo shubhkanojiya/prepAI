@@ -1,48 +1,117 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize static %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link href="{% static 'css/home-hero.css' %}" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
 <!-- Hero -->
-<section class="hero">
-  <div class="container">
-    <div class="row g-5 align-items-center">
-      <div class="col-lg-7">
-        <p class="hero-kicker mb-3"><span class="dot" aria-hidden="true"></span> For CBSE, ICSE &amp; State Board students</p>
-        <h1 class="display-title mb-4">Your AI-Powered <span class="text-accent">Board Exam</span> Partner</h1>
-        <p class="lead text-2 mb-4" style="max-width:600px">
-          Past papers, timed mock tests and notes for your syllabus. Snap a photo of any question for a step-by-step solution, and see how often it has come up in previous exams.
-        </p>
-        <div class="search-shell">{% include "components/search_bar.html" with compact=False %}</div>
-        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 small">
-          <span class="text-muted me-1">Popular:</span>
-          <a class="chip" href="{% url 'search:results' %}?q=quadratic+equations">Quadratic equations</a>
-          <a class="chip" href="{% url 'search:results' %}?q=photosynthesis">Photosynthesis</a>
-          <a class="chip" href="{% url 'search:results' %}?q=Newton">Newton's laws</a>
-        </div>
-      </div>
-      <div class="col-lg-5 d-none d-lg-block" aria-hidden="true">
-        <div class="pa-card" style="transform: rotate(1.2deg); box-shadow: var(--pa-shadow-lg);">
-          <div class="pa-card-header"><span class="small fw-semibold">Science · Class 9</span><span class="badge-soft">5 marks</span></div>
-          <div class="card-body">
-            <p class="mb-3" style="font-family: var(--pa-font-serif); font-size: 1.25rem; line-height: 1.35;">Q. Explain Newton's three laws of motion with one example each.</p>
-            <div class="small text-muted mb-2">Asked in previous papers</div>
-            <div class="d-flex gap-2 mb-3">
-              <span class="year-pill">2019</span><span class="year-pill">2021</span><span class="year-pill">2023</span><span class="year-pill">2025</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center pt-3 border-top border-soft">
-              <span class="small"><span class="fw-semibold">Every ~2 years</span> <span class="text-muted">· next due 2027</span></span>
-              <span class="badge-warn">High priority</span>
-            </div>
+<section class="ph-hero" aria-labelledby="ph-title">
+  <div class="ph-sky" aria-hidden="true">
+    <div class="ph-aurora ph-aurora--blue"></div>
+    <div class="ph-aurora ph-aurora--violet"></div>
+    <div class="ph-rules"></div>
+  </div>
+
+  <div class="container ph-inner">
+    <div class="ph-copy">
+      {% if hero.latest_year %}
+      <a href="{% url 'papers:previous_year' %}" class="ph-eyebrow ph-rise" style="--d:.05s">
+        <span class="ph-eyebrow-tag">NEW</span> {{ hero.latest_year }} board papers are in <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+      </a>
+      {% endif %}
+
+      <h1 id="ph-title" class="ph-brand">
+        <span class="ph-line ph-mask" style="--d:.1s"><span>Prep<span class="ph-brand-ai">AI</span></span></span>
+      </h1>
+      <p class="ph-title">
+        <span class="ph-line ph-mask" style="--d:.24s"><span>Every board paper.</span></span>
+        <span class="ph-line ph-mask" style="--d:.34s"><span><em>Five years</em> deep.</span></span>
+      </p>
+
+      <p class="ph-lede ph-rise" style="--d:.4s">
+        Real previous-year papers from CBSE, ICSE and state boards, straight from the boards' own websites.
+        Pick your board and class to start.
+      </p>
+    </div>
+
+    <div class="ph-stage" aria-hidden="true">
+      <div class="ph-halo"></div>
+      <div class="ph-stack">
+        {% for y in hero.years|slice:"1:" reversed %}
+        <div class="ph-sheet" style="--i:{{ forloop.revcounter }}"><div class="ph-sheet-head"><span class="ph-sheet-board"></span><span class="ph-sheet-year">{{ y }}</span></div></div>
+        {% endfor %}
+        {% with first=hero.showcase.0 %}
+        <div class="ph-sheet ph-sheet--front" style="--i:0">
+          <div class="ph-sheet-head">
+            <span class="ph-sheet-board" data-ph-swap="board">{{ first.board|default:"CBSE" }}</span>
+            <span class="ph-sheet-year">{{ hero.years.0 }}</span>
           </div>
+          <div class="ph-sheet-subject"><span data-ph-swap="class">{{ first.class|default:"Class 10" }}</span> · <span data-ph-swap="subject">{{ first.subject|default:"Science" }}</span></div>
+          <div class="ph-sheet-meta"><span>Time: 3 hours</span><span>Max. marks: 80</span></div>
+          <div class="ph-sheet-section">SECTION A</div>
+          <div class="ph-q"><b>1.</b><div class="ph-q-lines"><i></i><i></i></div></div>
+          <div class="ph-q"><b>2.</b><div class="ph-q-lines"><i></i><i></i><i></i></div></div>
+          <div class="ph-q ph-q--hot"><b>3.</b><div class="ph-q-lines"><i></i><i></i></div></div>
+          <div class="ph-q"><b>4.</b><div class="ph-q-lines"><i></i><i></i><i></i></div></div>
+          <div class="ph-q"><b>5.</b><div class="ph-q-lines"><i></i><i></i></div></div>
+        </div>
+        {% endwith %}
+      </div>
+      <div class="ph-callout ph-callout--years">
+        <span class="ph-ic ph-ic--blue"><i class="bi bi-calendar3"></i></span>
+        <div><strong>Last five exam years</strong>
+          <div class="ph-years">{% for y in hero.years reversed %}<span>{{ y|stringformat:"d"|slice:"2:" }}</span>{% endfor %}</div>
         </div>
       </div>
+      <div class="ph-callout ph-callout--test">
+        <span class="ph-ic ph-ic--violet"><i class="bi bi-stopwatch"></i></span>
+        <div><strong>Timed mock tests</strong>Exam-style, auto-submitted</div>
+      </div>
+      {{ hero.showcase|json_script:"ph-showcase-data" }}
     </div>
-    <div class="row g-3 mt-5 pt-4 hero-stats" aria-label="Platform statistics">
-      <div class="col-6 col-md-3"><div class="stat">{{ stats.boards|intcomma }}</div><div class="small text-muted">Boards</div></div>
-      <div class="col-6 col-md-3"><div class="stat">{{ stats.papers|intcomma }}</div><div class="small text-muted">Question papers</div></div>
-      <div class="col-6 col-md-3"><div class="stat">{{ stats.questions|intcomma }}</div><div class="small text-muted">Practice questions</div></div>
-      <div class="col-6 col-md-3"><div class="stat">{{ stats.tests|intcomma }}</div><div class="small text-muted">Online tests</div></div>
+
+    <div class="ph-actions">
+      {% if hero.finder %}
+      <form class="ph-finder ph-rise" style="--d:.5s" method="get" action="{% url 'papers:previous_year' %}" aria-label="Find previous year papers">
+        <div class="ph-field">
+          <label for="ph-board">Board</label>
+          <select id="ph-board" name="board">
+            {% for b in hero.finder %}<option value="{{ b.slug }}">{{ b.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="ph-field">
+          <label for="ph-class">Class</label>
+          <select id="ph-class" name="class_level">
+            {% for c in hero.finder.0.classes %}<option value="{{ c.slug }}" data-count="{{ c.count }}">{{ c.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="ph-btn ph-btn-primary">
+          <span data-ph-cta>Show papers</span>
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </form>
+      {{ hero.finder|json_script:"ph-finder-data" }}
+      {% endif %}
+
+      <nav class="ph-quick ph-rise" style="--d:.62s" aria-label="More ways to study">
+        <a href="{% url 'testengine:mock_list' %}"><i class="bi bi-stopwatch" aria-hidden="true"></i> Mock tests</a>
+        <a href="{% url 'content:list' %}"><i class="bi bi-journal-text" aria-hidden="true"></i> Study notes</a>
+        <a href="{% url 'scanner:scanner' %}"><i class="bi bi-camera" aria-hidden="true"></i> Snap &amp; solve</a>
+        <a href="{% url 'search:results' %}"><i class="bi bi-search" aria-hidden="true"></i> Search</a>
+      </nav>
     </div>
+  </div>
+
+  <div class="container">
+    <dl class="ph-stats" aria-label="What's on PrepAI">
+      <div class="ph-stat ph-rise" style="--d:.7s"><dt>real board papers</dt><dd>{{ hero.papers|intcomma }}</dd></div>
+      <div class="ph-stat ph-rise" style="--d:.78s"><dt>subjects covered</dt><dd>{{ hero.subjects|intcomma }}</dd></div>
+      <div class="ph-stat ph-rise" style="--d:.86s"><dt>boards with past papers</dt><dd>{{ hero.boards }}</dd></div>
+      <div class="ph-stat ph-rise" style="--d:.94s"><dt>exam years</dt><dd>{{ hero.years|last }}<em>–</em>{{ hero.years.0|stringformat:"d"|slice:"2:" }}</dd></div>
+    </dl>
   </div>
 </section>
 
@@ -196,4 +265,8 @@
     {% endif %}
   </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/home-hero.js' %}" defer></script>
 {% endblock %}

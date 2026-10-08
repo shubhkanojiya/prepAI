@@ -26,6 +26,25 @@ class QuestionSerializer(serializers.ModelSerializer):
                   "difficulty", "marks", "negative_marks", "concepts", "options", "source",
                   "is_important", "is_published", "url"]
 
+    def _locked_ids(self):
+        # Computed once per response; list serializers share this context dict with each row.
+        if "locked_question_ids" not in self.context:
+            from testengine.services import locked_question_ids
+
+            request = self.context.get("request")
+            self.context["locked_question_ids"] = (locked_question_ids(request.user)
+                                                   if request else set())
+        return self.context["locked_question_ids"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["answers_hidden"] = instance.pk in self._locked_ids()
+        if data["answers_hidden"]:  # part of a test this user is taking right now
+            data["answer"] = data["explanation"] = ""
+            for option in data["options"]:
+                option["is_correct"] = None
+        return data
+
 
 class PredictRequestSerializer(serializers.Serializer):
     text = serializers.CharField(max_length=2000, trim_whitespace=True)

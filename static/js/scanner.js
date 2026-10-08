@@ -150,8 +150,8 @@
         <h3 class="h6 text-muted text-uppercase small fw-bold">Follow-up questions</h3><ul class="list-unstyled mb-0">${followups}</ul>
       </div></article>` : ""}
       <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-primary" href="/questions/predictor/?q=${encodeURIComponent(data.detected_question.slice(0, 900))}${data.subject ? `&subject=${data.subject}` : ""}"><i class="bi bi-graph-up-arrow"></i> Check exam history &amp; chances</a>
-        <a class="btn btn-ghost" href="/assistant/?q=${encodeURIComponent("Explain this in simpler words: " + data.detected_question)}"><i class="bi bi-chat-dots"></i> Discuss with AI Assistant</a>
+        <a class="btn btn-primary" href="/questions/predictor/?q=${encodeURIComponent((data.detected_question || "").slice(0, 900))}${data.subject ? `&subject=${data.subject}` : ""}"><i class="bi bi-graph-up-arrow"></i> Check exam history &amp; chances</a>
+        <a class="btn btn-ghost" href="/assistant/?q=${encodeURIComponent("Explain this in simpler words: " + (data.detected_question || ""))}"><i class="bi bi-chat-dots"></i> Discuss with AI Assistant</a>
         <button type="button" class="btn btn-ghost" id="scanAnother"><i class="bi bi-camera"></i> Scan another</button>
         ${data.url ? `<a class="btn btn-ghost" href="${encodeURI(data.url)}"><i class="bi bi-link-45deg"></i> Saved scan</a>` : ""}
       </div>

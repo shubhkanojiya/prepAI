@@ -9,48 +9,7 @@ All educational content (boards, classes, subjects, chapters, topics, questions,
 ## 1. Project overview
 
 | Layer | What it does |
-|---|---|
-| Django templates + Bootstrap 5.3 | Responsive UI with light/dark themes, reusable components |
-| Django REST Framework | Versioned REST API at `/api/v1/` (session + token auth) |
-| PostgreSQL | Primary database (SQLite fallback for quick local runs) |
-| `services/ai_service.py` | Provider-agnostic AI layer (Anthropic Claude by default) |
-| `services/ocr_service.py` | Optional OCR step for the scanner (vision model or Tesseract) |
-| Django Admin | Complete content workflow with publish/unpublish |
-
-### App layout
-
-```
-config/           settings, root URLs, API router, WSGI/ASGI
-core/             base models, validators, permissions, home, error pages, template tags, seed command
-accounts/         custom User (email login), Profile, auth views, auth API
-boards/           Board → ClassLevel → Subject → Chapter → Topic + board explorer
-questions/        Question bank, options, concepts, historical appearances, frequency analysis
-papers/           Question papers, previous-year papers (proxy model), PDF viewer/download
-content/          Study material library
-testengine/       Tests, attempts, answers, grading, results   (the spec's "tests" app*)
-bookmarks/        Generic bookmarks
-analytics/        Activity log, performance records, analytics queries
-recommendations/  Rule-based recommendation engine
-notifications/    Notifications + admin announcements
-search/           Global search, suggestions, search history
-scanner/          AI question scanner + scan history
-assistant/        AI study assistant conversations
-dashboard/        Student dashboard + analytics pages
-services/         ai_service.py, ocr_service.py (no views; pure service layer)
-templates/ static/ media/
-```
-
-\* Named `testengine` because a top-level package called `tests` collides with Python/Django test discovery.
-
-## 2. Features
-
-- **Board explorer** — Board → Class → Subject → Chapter → Topic, each page showing materials, questions, tests and previous-year questions.
-- **Question papers & previous-year papers** — filters (board, class, subject, chapter, year, paper/exam type, difficulty), in-browser PDF viewer (zoom, page navigation, fullscreen, lazy rendering), download, bookmark, share, related papers, and important questions ranked by historical frequency.
-- **Online test engine** — chapter, subject, board, previous-year, practice and full-length mock tests. Timer with automatic submission, question palette, mark for review, clear answer, negative marking, autosave with an offline backup (answers survive refreshes and network drops), server-side deadline enforcement, and detailed results (score, accuracy, time, question-wise review, subject/chapter breakdown, recommended topics and tests).
-- **AI Question Scanner** — camera capture or upload (drag/drop/paste), printed or handwritten. It detects the question, subject and chapter, then gives the answer, step-by-step explanation, concept and follow-up questions. Scans are saved to history for logged-in users; failures offer a retry.
-- **AI Study Assistant** — conversation history, modes (simple, detailed, practice questions, quiz, revision), subject context, Markdown and LaTeX rendering.
-- **Question Prediction & Frequency Analysis** — previous appearances, frequency, recency, repeated concepts, similar questions and a transparent preparation priority, computed **only** from stored papers. The disclaimer "Historical analysis does not guarantee appearance in a future examination." is always shown.
-- **Exam Question Predictor** (`/questions/predictor/`) — paste any question, or send one from the AI Scanner. PrepAI matches it to stored questions (exact repeats and reworded versions), shows **how many times** it appeared, **in which years** and in which papers (a year-by-year timeline), finds the **recurrence pattern** (e.g. "about every 2 years → next around 2027"), and gives a **history-based likelihood estimate** for the upcoming exam. The estimate uses a transparent formula (appearance rate 60%, recency 25%, concept rate 15%, +5 points if the pattern points to the upcoming year), is capped between 3% and 85%, and always shows the disclaimer. Its accuracy depends on how many real previous-year papers are loaded.
+|---|---|the upcoming exam. The estimate uses a transparent formula (appearance rate 60%, recency 25%, concept rate 15%, +5 points if the pattern points to the upcoming year), is capped between 3% and 85%, and always shows the disclaimer. Its accuracy depends on how many real previous-year papers are loaded.
 - **Dashboard & analytics** — tests attempted, average and best score, questions solved, study streak, subject/chapter/test-type performance, score trend (Chart.js), weak and strong areas, recent activity, bookmarks, scans and conversations.
 - **Recommendations** — weak chapters trigger revision notes, chapter tests, frequently repeated questions and previous-year papers; new students get picks for their board and class.
 - **Global search** — 10 result categories, board/class/subject/chapter/year/type filters, suggestions, recent searches, search history.
@@ -88,7 +47,7 @@ ALTER DATABASE prepai OWNER TO prepai;
 ```
 
 Then set `DATABASE_URL=postgres://prepai:change-me@localhost:5432/prepai` in `.env`.
-For a quick local trial you can leave `DATABASE_URL` empty to use SQLite (not for production).
+`DATABASE_URL` must point to a PostgreSQL database (a free one from https://neon.tech works).
 
 ## 7. Environment variables
 
@@ -99,9 +58,50 @@ cp .env.example .env      # Windows: copy .env.example .env
 | Variable | Purpose |
 |---|---|
 | `DEBUG` | `True` locally, `False` in production |
-| `SECRET_KEY` | Required when `DEBUG=False`. Generate: `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
+| `SECRET_KEY` | Required when `DEBUG=False`. Generate: `python -c "import secrets;
+| Django templates + Bootstrap 5.3 | Responsive UI with light/dark themes, reusable components |
+| Django REST Framework | Versioned REST API at `/api/v1/` (session + token auth) |
+| PostgreSQL | Database (required) |
+| `services/ai_service.py` | Provider-agnostic AI layer (Anthropic Claude by default) |
+| `services/ocr_service.py` | Optional OCR step for the scanner (vision model or Tesseract) |
+| Django Admin | Complete content workflow with publish/unpublish |
+
+### App layout
+
+```
+config/           settings, root URLs, API router, WSGI/ASGI
+core/             base models, validators, permissions, home, error pages, template tags, seed command
+accounts/         custom User (email login), Profile, auth views, auth API
+boards/           Board → ClassLevel → Subject → Chapter → Topic + board explorer
+questions/        Question bank, options, concepts, historical appearances, frequency analysis
+papers/           Question papers, previous-year papers (proxy model), PDF viewer/download
+content/          Study material library
+testengine/       Tests, attempts, answers, grading, results   (the spec's "tests" app*)
+bookmarks/        Generic bookmarks
+analytics/        Activity log, performance records, analytics queries
+recommendations/  Rule-based recommendation engine
+notifications/    Notifications + admin announcements
+search/           Global search, suggestions, search history
+scanner/          AI question scanner + scan history
+assistant/        AI study assistant conversations
+dashboard/        Student dashboard + analytics pages
+services/         ai_service.py, ocr_service.py (no views; pure service layer)
+templates/ static/ media/
+```
+
+\* Named `testengine` because a top-level package called `tests` collides with Python/Django test discovery.
+
+## 2. Features
+
+- **Board explorer** — Board → Class → Subject → Chapter → Topic, each page showing materials, questions, tests and previous-year questions.
+- **Question papers & previous-year papers** — filters (board, class, subject, chapter, year, paper/exam type, difficulty), in-browser PDF viewer (zoom, page navigation, fullscreen, lazy rendering), download, bookmark, share, related papers, and important questions ranked by historical frequency.
+- **Online test engine** — chapter, subject, board, previous-year, practice and full-length mock tests. Timer with automatic submission, question palette, mark for review, clear answer, negative marking, autosave with an offline backup (answers survive refreshes and network drops), server-side deadline enforcement, and detailed results (score, accuracy, time, question-wise review, subject/chapter breakdown, recommended topics and tests).
+- **AI Question Scanner** — camera capture or upload (drag/drop/paste), printed or handwritten. It detects the question, subject and chapter, then gives the answer, step-by-step explanation, concept and follow-up questions. Scans are saved to history for logged-in users; failures offer a retry.
+- **AI Study Assistant** — conversation history, modes (simple, detailed, practice questions, quiz, revision), subject context, Markdown and LaTeX rendering.
+- **Question Prediction & Frequency Analysis** — previous appearances, frequency, recency, repeated concepts, similar questions and a transparent preparation priority, computed **only** from stored papers. The disclaimer "Historical analysis does not guarantee appearance in a future examination." is always shown.
+- **Exam Question Predictor** (`/questions/predictor/`) — paste any question, or send one from the AI Scanner. PrepAI matches it to stored questions (exact repeats and reworded versions), shows **how many times** it appeared, **in which years** and in which papers (a year-by-year timeline), finds the **recurrence pattern** (e.g. "about every 2 years → next around 2027"), and gives a **history-based likelihood estimate** for  print(secrets.token_urlsafe(50))"` |
 | `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | Comma-separated hostnames / origins |
-| `DATABASE_URL` | PostgreSQL URL (empty → SQLite) |
+| `DATABASE_URL` | PostgreSQL URL (required) |
 | `REDIS_URL` | Optional cache (install `redis`) |
 | `AI_PROVIDER` | `anthropic` \| `groq` \| `openrouter` \| `openai_compatible` \| `mock` \| `disabled` |
 | `AI_API_KEY`, `AI_MODEL`, `AI_VISION_MODEL`, `AI_BASE_URL`, `AI_TIMEOUT`, `AI_MAX_TOKENS`, `AI_EFFORT`, `AI_REFUSAL_FALLBACK` | AI configuration (section 13) |
@@ -151,6 +151,51 @@ This creates 9 boards (CBSE, ICSE, Maharashtra, Gujarat, Karnataka, Tamil Nadu, 
 The demo student has three completed attempts, so the dashboard, analytics and recommendations are populated.
 
 > **All seeded content is flagged `is_sample=True` and shows a "Sample" badge.** Demo "previous-year" papers are titled `[Demo] … (sample previous-year format)`, state that they are not official board papers, and exist only to demonstrate the frequency analysis. Do not present them as real examination statistics. Replace them with real papers before launch.
+
+### Importing real previous-year papers
+
+Put the PDFs in one folder per board → class → subject, named by year:
+
+```
+papers_import/
+  cbse/10/mathematics/2025.pdf
+  cbse/10/mathematics/2025-solutions.pdf        # attached as the solution PDF
+  cbse/12/physics/2024-supplementary.pdf        # also: term-1, term-2, pre-board, other
+  msbshse/class-10/science-and-technology-part-1/2023.pdf
+```
+
+Folder names match a board/class/subject slug, name, short name or class number. Subjects must already exist: `python manage.py load_subjects` creates every board's Class 10/12 subjects listed in `boards/catalog.py` (or add them in admin).
+
+```bash
+python manage.py load_subjects                              # classes + subjects from boards/catalog.py
+python manage.py import_papers papers_import --dry-run      # preview matches and skips
+python manage.py import_papers papers_import                # import (safe to re-run)
+python manage.py import_papers papers_import --board cbse   # only one board folder
+python manage.py import_papers papers_import --unpublished  # import hidden, review in admin
+python manage.py import_papers papers_import --max-mb 120   # allow large scanned PDFs for this import
+python manage.py import_papers papers_import_model --paper-type model  # boards' official model papers
+```
+
+Existing PDFs are kept unless you pass `--replace`. Students aren't notified unless you pass `--notify`. Imported papers show up at `/previous-year-papers/`, where students filter by board → class → subject → chapter, year and exam, and see a grid of subjects × the last 5 exam years. The same year strip appears on every subject page. Choosing a chapter lists the previous-paper questions tagged to it.
+
+**CBSE** papers can be fetched straight from cbse.gov.in each year (one set per subject and exam, read from CBSE's zips without downloading them whole):
+
+```bash
+python manage.py fetch_cbse_papers          # → papers_import/cbse/<class>/<subject>/<year>[-supplementary].pdf
+python manage.py import_papers papers_import --board cbse
+```
+
+What the other boards' official websites publish (checked October 2026):
+
+| Board | Previous-year papers available officially |
+|---|---|
+| ICSE / ISC | No standalone papers. CISCE's "Analysis of Pupil Performance" (2023–2025) reproduces the exam questions with marking scheme; imported under that title |
+| Maharashtra | 2024–2026, March and July/June exams |
+| Gujarat | 2022 only (scanned) |
+| Karnataka | SSLC 2022–2026 (all exams), II PUC 2025–2026 |
+| Tamil Nadu | 2022–2026 main exams, one combined PDF per year (split per subject on import) |
+| UP, Bihar | Model papers only (imported as `model`, never as previous-year papers) |
+| West Bengal | Nothing published |
 
 ## 12. Running tests
 
@@ -203,12 +248,12 @@ AI_REFUSAL_FALLBACK=True
 2. `pip install -r requirements.txt`
 3. `python manage.py migrate`
 4. `python manage.py collectstatic --noinput` (WhiteNoise serves hashed, compressed assets)
-5. `python manage.py check --deploy` (it passes with the provided settings)
+5. `python manage.py check --deploy`. Fix any `prepai.W00x` warnings: they flag console email, a missing `REDIS_URL` and unserved local media.
 6. Run with Gunicorn behind Nginx or a platform load balancer:
    ```bash
-   gunicorn config.wsgi:application --workers 3 --timeout 120
+   gunicorn config.wsgi:application
    ```
-   Use a timeout above `AI_TIMEOUT`, because scanner and assistant requests wait for the AI.
+   `gunicorn.conf.py` sets threaded workers and a timeout above `AI_TIMEOUT`, because scanner and assistant requests wait for the AI. Set `NUM_PROXIES` to the number of proxies in front of the app so rate limits see real client IPs.
 7. With `DEBUG=False`, HTTPS redirect, secure cookies and 1-year HSTS are on by default. Forward `X-Forwarded-Proto` from your proxy.
 8. Health check endpoint: `GET /healthz/` (returns 503 if the database is unreachable).
 

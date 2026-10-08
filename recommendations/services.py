@@ -117,7 +117,7 @@ def generate_for_user(user):
                                   object_id=obj.pk, reason=reason[:255], score=score))
         if len(new) >= MAX_RECOMMENDATIONS:
             break
-    Recommendation.objects.bulk_create(new)
+    Recommendation.objects.bulk_create(new, ignore_conflicts=True)  # concurrent page loads
     return new
 
 

@@ -23,5 +23,5 @@ gunicorn>=23.0; sys_platform != "win32"
 # Optional extras (uncomment when enabling the feature in .env)
 # ---------------------------------------------------------------------------
 # redis>=5.0                 # CACHE: set REDIS_URL
-# django-storages[s3]>=1.14  # STORAGE_BACKEND=s3
+django-storages[s3]>=1.14    # needed when STORAGE_BACKEND=s3 (S3 or Cloudflare R2)
 # pytesseract>=0.3           # OCR_BACKEND=tesseract (requires the tesseract binary)

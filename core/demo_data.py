@@ -22,12 +22,6 @@ BOARDS = [
 # board short_name -> class number -> subject name -> {icon, color, popular, chapters: {name: [topics]}}
 CURRICULUM = {
     "CBSE": {
-        9: {
-            "Science": {"icon": "radioactive", "color": "#0f766e", "popular": False, "chapters": {
-                "Force and Laws of Motion": ["Balanced and Unbalanced Forces", "Newton's First Law", "Newton's Second Law", "Newton's Third Law"],
-                "Motion": ["Distance and Displacement", "Velocity and Acceleration"],
-            }},
-        },
         10: {
             "Mathematics": {"icon": "calculator", "color": "#2563a8", "popular": True, "chapters": {
                 "Real Numbers": ["Fundamental Theorem of Arithmetic", "Irrational Numbers"],
@@ -85,7 +79,6 @@ CONCEPTS = {
                                   "Pythagorean Identity", "HCF and LCM", "Irrationality Proofs", "Zeroes of Polynomials"],
     ("CBSE", 10, "Science"): ["Ohm's Law", "Resistance", "Series Combination", "Photosynthesis",
                               "Decomposition Reaction", "Displacement Reaction", "Spherical Mirrors", "Power of a Lens"],
-    ("CBSE", 9, "Science"): ["Force", "Motion", "Acceleration", "Inertia", "Action and Reaction"],
 }
 
 # Each question: key, (board, class, subject), chapter, topic, type, difficulty, marks, text,
@@ -210,29 +203,6 @@ QUESTIONS = [
          type="mcq", difficulty="easy", marks=1, text="The site of photosynthesis in a plant cell is the:",
          options=[("Chloroplast", True), ("Mitochondrion", False), ("Nucleus", False), ("Ribosome", False)],
          explanation="Chloroplasts contain chlorophyll, which traps light energy.", concepts=["Photosynthesis"]),
-    # ---- CBSE 9 Science ----
-    dict(key="newton_laws", scope=(Q, 9, "Science"), chapter="Force and Laws of Motion", topic="Newton's First Law",
-         type="long", difficulty="medium", marks=5, text="Explain Newton's laws of motion.",
-         answer="**First law (law of inertia):** A body stays at rest or in uniform motion in a straight line unless an unbalanced external force acts on it.\n\n**Second law:** The rate of change of momentum is proportional to the applied force and happens in the direction of the force: F = ma.\n\n**Third law:** To every action there is an equal and opposite reaction, acting on different bodies.",
-         explanation="Give one everyday example for each law: a passenger jerking forward when a bus brakes (inertia), pushing a heavier cart needs more force (F = ma), and the recoil of a gun (action–reaction).",
-         concepts=["Force", "Motion", "Acceleration", "Inertia", "Action and Reaction"], important=True),
-    dict(key="inertia_law", scope=(Q, 9, "Science"), chapter="Force and Laws of Motion", topic="Newton's First Law",
-         type="mcq", difficulty="easy", marks=1, text="Newton's first law of motion is also known as the law of:",
-         options=[("Inertia", True), ("Momentum", False), ("Action and reaction", False), ("Gravitation", False)],
-         explanation="It describes inertia — the tendency of a body to resist a change in its state of motion.", concepts=["Inertia"]),
-    dict(key="newton_unit", scope=(Q, 9, "Science"), chapter="Force and Laws of Motion", topic="Newton's Second Law",
-         type="mcq", difficulty="easy", marks=1, text="The SI unit of force is:",
-         options=[("Newton", True), ("Joule", False), ("Pascal", False), ("Watt", False)],
-         explanation="1 N is the force that gives a 1 kg mass an acceleration of 1 m/s².", concepts=["Force"]),
-    dict(key="f_ma", scope=(Q, 9, "Science"), chapter="Force and Laws of Motion", topic="Newton's Second Law",
-         type="numeric", difficulty="easy", marks=1,
-         text="A force gives a 2 kg mass an acceleration of 3 m/s². What is the magnitude of the force in newtons?",
-         answer="6", explanation="F = ma = 2 kg × 3 m/s² = 6 N.", concepts=["Force", "Acceleration"]),
-    dict(key="recoil", scope=(Q, 9, "Science"), chapter="Force and Laws of Motion", topic="Newton's Third Law",
-         type="mcq", difficulty="easy", marks=1, text="The recoil of a gun when a bullet is fired is explained by:",
-         options=[("Newton's third law", True), ("Newton's first law", False), ("Newton's law of gravitation", False), ("Ohm's law", False)],
-         explanation="The gun pushes the bullet forward (action); the bullet pushes the gun backward (reaction).",
-         concepts=["Action and Reaction"]),
 ]
 
 # Demo "previous-year" papers: (key, scope, year, [(question_key, question_number, marks)])
@@ -247,10 +217,6 @@ DEMO_PYP = [
     ("s2023", (Q, 10, "Science"), 2023, [("photosynthesis", "26", 3), ("series", "12", 1), ("ohm", "9", 1)]),
     ("s2024", (Q, 10, "Science"), 2024, [("decomposition", "2", 1), ("current", "13", 1)]),
     ("s2025", (Q, 10, "Science"), 2025, [("photosynthesis", "24", 3), ("current", "10", 1), ("concave_c", "7", 1)]),
-    ("p2019", (Q, 9, "Science"), 2019, [("newton_laws", "30", 5)]),
-    ("p2021", (Q, 9, "Science"), 2021, [("newton_laws", "29", 5), ("recoil", "8", 1)]),
-    ("p2023", (Q, 9, "Science"), 2023, [("newton_laws", "31", 5), ("f_ma", "12", 1)]),
-    ("p2025", (Q, 9, "Science"), 2025, [("newton_laws", "30", 5), ("recoil", "9", 1)]),
 ]
 
 OTHER_PAPERS = [
@@ -317,16 +283,6 @@ At constant temperature, **V = IR**.
 
 # Heating effect
 H = I²Rt (Joule's law of heating)""", True),
-    ((Q, 9, "Science"), "Force and Laws of Motion", None, "concept", "Newton's Laws of Motion — Concept Explanation",
-     "Understand inertia, F = ma and action–reaction with everyday examples.",
-     """# First law — inertia
-Objects keep doing what they are doing unless a net force acts. *Example:* you lurch forward when a bus brakes suddenly.
-
-# Second law — F = ma
-The larger the force, the larger the acceleration; heavier objects need more force for the same acceleration.
-
-# Third law — action and reaction
-Forces come in pairs acting on **different** bodies. *Example:* a gun recoils when fired.""", False),
     ((Q, 10, "Science"), "Chemical Reactions and Equations", None, "important_questions", "Chemical Reactions — Important Questions",
      "A curated list of commonly practised questions on types of reactions.",
      """1. Why should a magnesium ribbon be cleaned before burning in air?
@@ -364,8 +320,6 @@ TESTS = [
      ["sinA", "sin2cos2", "tan45", "sec_tan"], {}),
     ("maths_subject", "Class 10 Mathematics — Subject Test", "subject", (Q, 10, "Mathematics"), None, 30,
      ["hcf", "irrational", "poly_k", "poly_graph", "roots_2x2", "discriminant", "distinct_roots", "sinA", "tan45", "sec_tan"], {}),
-    ("motion_practice", "Force and Laws of Motion — Practice Test", "practice", (Q, 9, "Science"), "Force and Laws of Motion", 10,
-     ["inertia_law", "newton_unit", "f_ma", "recoil"], {}),
     ("board_practice", "CBSE Class 10 — Board Practice Test", "board", (Q, 10, None), None, 20,
      ["hcf", "roots_2x2", "sinA", "decomposition", "ohm", "chloroplast"], {}),
     ("mock_full", "CBSE Class 10 — Full-Length Mock Test (Maths + Science)", "mock", (Q, 10, None), None, 60,
