@@ -164,6 +164,14 @@ class AttemptApiTests(TestCase):
         self.assertEqual(r.status_code, 409)
         self.assertIn("result_url", r.json())
 
+    def test_start_via_view_and_api(self):
+        # request.user is a lazy wrapper here, unlike the model instances used above.
+        r = self.client.post(reverse("testengine:start", args=[self.test.slug]))
+        attempt = TestAttempt.objects.get(user=self.user, test=self.test)
+        self.assertRedirects(r, reverse("testengine:attempt", args=[attempt.pk]))
+        r = self.client.post(reverse("api:test-start", args=[self.test.slug]), {}, content_type="application/json")
+        self.assertIn(r.status_code, (200, 201))
+
     def test_result_page_renders(self):
         attempt = services.submit_attempt(services.start_attempt(self.user, self.test))
         self.assertContains(self.client.get(reverse("testengine:result", args=[attempt.pk])), "Question-wise analysis")

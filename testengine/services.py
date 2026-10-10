@@ -10,6 +10,7 @@ import random
 from collections import defaultdict
 from decimal import Decimal
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
@@ -34,7 +35,7 @@ def start_attempt(user, test):
     """Resume the user's active attempt or start a new one."""
     with transaction.atomic():
         # Lock the user row so a double-click can't create two attempts (or exceed max_attempts).
-        list(type(user).objects.select_for_update().filter(pk=user.pk).values_list("pk", flat=True))
+        list(get_user_model().objects.select_for_update().filter(pk=user.pk).values_list("pk", flat=True))
         return _start_attempt(user, test)
 
 
