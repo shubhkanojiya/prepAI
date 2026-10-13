@@ -22,9 +22,31 @@
   }
 
   /* ---------- Image selection ---------- */
-  function setImage(blob) {
+  const MAX_EDGE_PX = 1568; // matches the server; bigger photos only slow the upload
+
+  // Downscale big photos in the browser so phones upload ~300 KB instead of several MB.
+  async function shrink(blob) {
+    if (blob.type === "image/gif" || !window.createImageBitmap) return blob;
+    try {
+      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      const scale = Math.min(1, MAX_EDGE_PX / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && blob.size <= 1024 * 1024) { bitmap.close(); return blob; }
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const out = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+      return out && out.size < blob.size ? out : blob;
+    } catch (err) {
+      return blob; // undecodable here (e.g. HEIC) → let the server validate the original
+    }
+  }
+
+  async function setImage(blob) {
     if (!blob) return;
     if (!/^image\/(jpeg|png|webp|gif)$/.test(blob.type)) { toast("Please choose a JPG, PNG, WEBP or GIF image.", "error"); return; }
+    blob = await shrink(blob);
     if (blob.size > MAX_BYTES) { toast(`That image is larger than ${Math.round(MAX_BYTES / 1048576)} MB. Try a smaller photo.`, "error"); return; }
     imageBlob = blob;
     $("previewImg").src = URL.createObjectURL(blob);
@@ -183,7 +205,11 @@
       setStep("processing", true);
       const details = err.data?.error?.details;
       const fieldMsg = details && (details.image?.[0] || details.non_field_errors?.[0]);
-      renderError(fieldMsg || err.message, err.data?.error?.retryable);
+      // 502/504 come from the host when the request runs too long, with no JSON body.
+      const timedOut = !err.data && (err.status === 502 || err.status === 504);
+      renderError(fieldMsg || (timedOut
+        ? "That took too long. Try a closer photo of just one question, or type it in."
+        : err.message), err.data?.error?.retryable);
     } finally {
       $("scanBtn").disabled = false;
     }
